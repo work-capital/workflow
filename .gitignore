@@ -1,0 +1,64 @@
+# The directory Mix will write compiled artifacts to.
+/_build
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover
+
+# The directory Mix downloads your dependencies sources to.
+/deps
+
+# Where 3rd-party dependencies like ExDoc output generated docs.
+/doc
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
+
+selenium*
+nohup.out
+.idea
+*.dump
+*.log
+.iml
+.rebar3
+_*
+.eunit
+*.o
+*.beam
+*.plt
+*.swp
+*.swo
+.erlang.cookie
+ebin
+log
+erl_crash.dump
+.rebar
+_rel
+_rel-dev
+_deps
+_plugins
+_tdeps
+logs
+MnesiaCore*
+Mnesia.*
+tempfile*
+mnesia_test_case_info
+test_log*
+deps
+bank.d
+relx
+.erlang.mk
+data
+*.aof
+dump.*
+dump.rdb
+event_sourcing_appendonly.aof
+/docs/**/*.pdf
+*.d
+*.iml
+src/counter_aggregate.erl
+mix.lock
+*.aof
+dump.rdb

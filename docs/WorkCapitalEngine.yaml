@@ -1,0 +1,527 @@
+swagger: '2.0'
+info:
+  version: '0.0.1'
+  title: WorkCapital Engine API
+  description: |
+    This API enable integration with the WorkCapital system
+    The following uuids indentifies the source of the request
+    Omie uuid:            8148889c-5701-4e13-a255-2620f0f5f6f8
+    WorkCapital app uuid: 2f47aa5c-6383-40b3-9548-4c9ac9965391
+  contact:
+    name: WorkCapital API team
+    email: api@work.capital
+    url: http://engine.work.capital
+host: engine.work.capital
+basePath: /v1
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /company:
+    put:
+      description: Updates or Insert company details
+      produces:
+      - application/json
+      parameters:
+      - name: key
+        in: header
+        description: The key for the requester
+        required: true
+        type: string
+      - name: company
+        in: body
+        description: The companies information
+        required: true
+        schema:
+          $ref: '#/definitions/companyWithCredentials'
+      responses:
+        200:
+          description: |
+            The key to be used every time this company is accessed.
+            + The keys for all users created that wasn't registered
+            in the WorkCapital system before.
+          schema:
+            $ref: '#/definitions/keys'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+        - info
+  /user:
+    put:
+      description: Updates or Insert user details
+      produces:
+        - application/json
+      parameters:
+        - name: user
+          in: body
+          description: The users information
+          required: true
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                key:
+                  type: string
+                user:
+                  $ref: '#/definitions/user'
+      responses:
+        200:
+          description: Success
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+        - info
+  /purchase:
+    put:
+      description: |
+        Updates or Insert a purchase process
+        IMPORTANT: When updating the list of receivables inside,
+        means that all the previous receivables were canceled
+        and only the new list is valid.
+      produces:
+        - application/json
+      parameters:
+        - name: key
+          in: header
+          description: The key for the requester
+          required: true
+          type: string
+        - name: purchase
+          in: body
+          description: |
+            The purchase information that may be in different states.
+            e.g.: quoatation, purchase order or invoice
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/purchase'
+      responses:
+        200:
+          description: Success
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+        - finance
+  /receivable:
+    put:
+      description: Launched on every payment request emitted (Emissão de boleto)
+      produces:
+        - application/json
+      parameters:
+        - name: key
+          in: header
+          description: The key for the requester
+          required: true
+          type: string
+        - name: receivable
+          in: body
+          description: The receivable information
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/receivable'
+      responses:
+        200:
+          description: Success
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+        - finance
+  /risk_report:
+    put:
+      description: Updates or Insert risk report
+      produces:
+        - application/json
+      parameters:
+        - name: key
+          in: header
+          description: The key for the requester
+          required: true
+          type: string
+        - name: reports
+          in: body
+          description: The reports of this cnpj
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/riskReport'
+      responses:
+        200:
+          description: Success
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/error'
+      tags:
+        - risk
+  /show_receivables:
+    get:
+      tags:
+        - finance
+      description: Show receivables to be discounted
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: uuid
+          description: |
+            The receivables uuids to be shown pre selected on WorkCapital app
+            To be added as one item separated by comma without spaces:
+            e.g.: http://omie.work.capital/v1/show_receivables?uuid[]=8c24f39ac5af5436682ecf27bd,1a15fbdf0a1c83db3f388bda701
+          required: true
+          type: array
+          items:
+            type: string
+          collectionFormat: csv
+      responses:
+        default:
+          description: Success
+definitions:
+  purchase:
+    required:
+      - uuid
+      - lastUpdate
+      - status
+      - xml
+    type: object
+    properties:
+      uuid:
+        type: string
+        description: A unique identifier for each purchase
+      lastUpdate:
+        description: The date this purchase was last updated
+        type: string
+        format: YYYY-MM-DDTHH:MM:SS+00:00
+      number:
+        type: string
+      status:
+        type: string
+        enum: [
+                "quotation",
+                "purchaseOrder",
+                "invoice",
+                "invoiceCanceled"
+                ]
+      phase:
+        type: string
+      nfeKey:
+        type: string
+      receivables:
+        type: array
+        items:
+          $ref: '#/definitions/receivable'
+      xml:
+        type: string
+        description: xml content (original if emitted / fake if draft)
+  receivable:
+    description: |
+      While first creating the receivable all fields are required.
+      While updating the receivable only uuid and lastUpdate fields are required
+    type: object
+    properties:
+      uuid:
+        type: string
+        description: A unique identifier for each receivable
+      receivableNumber:
+        type: string
+        description: This is the "numero do documento" shown inside the boleto
+      lastUpdate:
+        description: The date this purchase was last updated
+        type: string
+        format: YYYY-MM-DDTHH:MM:SS+00:00
+      supplier:
+        $ref: '#/definitions/company'
+      buyer:
+        $ref: '#/definitions/company'
+      creationDate:
+        description: The date this receivable was created
+        type: string
+        format: YYYY-MM-DD
+      dueDate:
+        description: The date this receivable needs to be paid
+        type: string
+        format: YYYY-MM-DD
+      installment:
+        type: number
+      numberOfInstallments:
+        type: number
+      protestIn:
+        type: number
+        description: |
+          Defines the number of days to wait until the system
+          will protest this receivable against the bank.
+          If this value is 0 the receivable should NOT be protested.
+      category:
+        type: string
+        description: |
+          Field used to describe the receivable category.
+          Defined by the user
+      paymentSlipCode:
+        type: string
+        description: Linha digitavel
+      paymentSlipNumber:
+        type: string
+        description: Numero do boleto
+      purchaseUuid:
+        type: string
+      comment:
+        type: string
+      originalAmount:
+        type: number
+      interestTotal:
+        type: number
+      fineTotal:
+        type: number
+      totalDiscount:
+        type: string
+      paidTotal:
+        type: string
+      outstandingValue:
+        type: string
+      liquidationDate:
+        type: string
+        format: YYYY-MM-DD
+        description: The date this receivable was completely liquidated
+      preferredBank:
+        $ref: '#/definitions/bankAccount'
+      payments:
+        type: array
+        items:
+          $ref: '#/definitions/payment'
+      nfeKey:
+        description: The 44 NFe key that is related to this receivable
+        type: string
+      nfeNumber:
+        type: string
+        description: The number of the nota fiscal without the series
+  user:
+    type: object
+    items:
+      required:
+        - email
+    properties:
+      cpf:
+        type: string
+      username:
+        type: string
+      email:
+        type: string
+        description: This is the unique identifier for the user
+      permissionLevel:
+        type: string
+        enum: ["admin", "user"]
+      firstName:
+        type: string
+      lastName:
+        type: string
+      nickname:
+        type: string
+      birthDate:
+        type: string
+      gender:
+        type: string
+        enum: [male, female]
+      phones:
+        type: array
+        items:
+          $ref: '#/definitions/phone'
+      businessSector:
+        type: string
+        enum: ["software",
+               "outsourcing",
+               "consulting",
+               "finance",
+               "others",
+               "infrastructure",
+               "industry",
+               "trade"]
+      knowErpThrough:
+        type: string
+        enum: [
+          "Google",
+          "Bing",
+          "Friend",
+          "Advertisement",
+          "Event",
+          "Social Network"]
+      sendWelcomeEmail:
+        type: boolean
+  company:
+    type: object
+    items:
+      required:
+        - cnpj
+    properties:
+      cnpj:
+        type: string
+      name:
+        type: string
+        description: (Razao Social)
+      nickname:
+        type: string
+        description: (Nome fantasia)
+      contactName:
+        type: string
+      phones:
+        type: array
+        items:
+          $ref: '#/definitions/phone'
+      address:
+        type: string
+      district:
+        type: string
+      city:
+        type: string
+      state:
+        type: string
+      zipCode:
+        type: string
+      country:
+        type: string
+        description: |
+          Country code based in the following list:
+          http://www.bcb.gov.br/Rex/ftp/paises.asp
+      email:
+        type: string
+      webSite:
+        type: string
+      stateRegistration:
+        type: string
+        description: Inscrição Estadual
+      municipalRegistration:
+        type: string
+        description: Inscrição Municipal
+      taxRegime:
+        type: string
+        description: Regime Tributario
+      cnae:
+        type: string
+      accountant:
+        type: string
+      franchise:
+        type: string
+      avatar:
+        type: string
+        description: This is the logo img in base64 format
+      bankAccounts:
+        type: array
+        items:
+          $ref: '#/definitions/bankAccount'
+      users:
+        type: array
+        items:
+          $ref: '#/definitions/user'
+      activationDate:
+        description: The date this receivable was modified
+        type: string
+        format: YYYY-MM-DD
+  phone:
+    type: object
+    properties:
+      number:
+        type: string
+      type:
+        type: string
+        enum: ["phone", "fax"]
+  credentials:
+    type: object
+    properties:
+      appKey:
+        type: string
+      appSecret:
+        type: string
+  companyWithCredentials:
+    type: object
+    properties:
+      companyDetails:
+        $ref: '#/definitions/company'
+      companyCredentials:
+        $ref: '#/definitions/credentials'
+  payment:
+    type: object
+    properties:
+      uuid:
+        type: string
+      amount:
+        type: number
+      date:
+        description: The date this receivable was modified
+        type: string
+        format: YYYY-MM-DD
+      fine:
+        type: number
+      interest:
+        type: number
+      bankAccount:
+        $ref: '#/definitions/bankAccount'
+      comment:
+        type: string
+  bankAccount:
+    type: object
+    properties:
+      bank:
+        type: string
+      branch:
+        type: string
+      number:
+        type: string
+      description:
+        type: string
+  riskReport:
+    type: object
+    properties:
+      cnpj:
+        type: string
+      xml:
+        type: string
+        description: |
+          A XML that cointain all report info.
+          The different kind of info are not allways
+          formated in the same fields name and structure
+      pdfLink:
+        type: string
+        description: A link maintained for 7 days with the pdf  report
+      date:
+        type: string
+        description: Report creation date
+        format: YYYY-MM-DD
+  error:
+    type: object
+    required:
+      - code
+      - message
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+  keys:
+    type: object
+    properties:
+      companyKey:
+        type: string
+      usersKey:
+        type: array
+        items:
+          type: object
+          properties:
+            email:
+              type: string
+            key:
+              type: string
