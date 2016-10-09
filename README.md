@@ -1,5 +1,10 @@
-Engine
-======
+CQRS Eventsourcing Engine
+=========================
+
+### Thanks
+Special thanks to [burmajam](https://github.com/burmajam) for sharing the very 
+well written extreme driver to connect to Eventstore.
+
 
 ### TODO's 
 
