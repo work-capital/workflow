@@ -3,7 +3,7 @@ CQRS Eventsourcing Engine
 
 ### Thanks
 Special thanks to [burmajam](https://github.com/burmajam) for sharing the very 
-well written extreme driver to connect to Eventstore.
+well written extreme driver to connect to Eventstore. 
 
 
 ### TODO's 
@@ -31,20 +31,30 @@ Engine.Bus.send_command(%{%Account.Command.DepositMoney{} | :id => "jsdf", :amou
   maangers, etc.. supervisors, static modules to help access data, etc.., also
   contains the CQRS framework, with its macros. Note that macros are not using
   the namespace. All the common files are here. 
-* lib/company - a real aggregator for to manage company data, registration,
-  contracts, etc...
-* lib/obligation - aggregator
-* lib/user - aggregator
-* lib/account - the graphaccount aggregator. for the sake of brevity, let's call
-  it account
+* account - example with an account bank aggregator. 
+* account/command - structs with account commands 
+* account/event   - structs with account events 
+* account/handler - command and event handlers, using macros. 
+* acount/model - state struct
+* account/supervisor.ex - supervisor for this aggregate
 
 
-## Links
 
-https://robots.thoughtbot.com/testing-a-phoenix-elixir-json-api
-https://github.com/maxcnunes/elixir-phoenix-rest-api
-https://www.coshx.com/blog/2016/03/16/json-api-with-phoenix/
-https://blog.codeship.com/an-introduction-to-apis-with-phoenix/
+## Resources
+Below you can see several resources I researched before writing this lib. 
+
+* [cqrs-erlang](https://github.com/bryanhunter/cqrs-with-erlang) - A memory
+  model using standard spawn functions CQRS in erlang. 
+* [gen-aggregate](https://github.com/burmajam/gen_aggregate/) - Macro for the
+  aggregate structure, using buffers. 
+* [cqrs-journey](https://msdn.microsoft.com/en-us/library/jj554200.aspx) - A
+  complete book on CQRS, with an OO approach. 
+
+* **JSON API** 
+https://robots.thoughtbot.com/testing-a-phoenix-elixir-json-api 
+https://github.com/maxcnunes/elixir-phoenix-rest-api 
+https://www.coshx.com/blog/2016/03/16/json-api-with-phoenix/ 
+https://blog.codeship.com/an-introduction-to-apis-with-phoenix/ 
 
 
 ### Eventstore
