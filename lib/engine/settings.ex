@@ -1,4 +1,4 @@
-defmodule Engine.Config do
+defmodule Engine.Settings do
   @moduledoc """
   It gives the configuration value based on key, but if the configuration was not
   specified in the config.exs file, the default configuration will be used

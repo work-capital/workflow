@@ -51,10 +51,10 @@ config :logger, :log_error,
 
 # see https://github.com/lpil/mix-test.watch how 
 # to exclude folders and files
-config :mix_test_watch,
-	clear: true,     # clean the console
-  tasks: [
-  	"test"
-    #"dogma"
-]
+# config :mix_test_watch,
+# 	clear: true,     # clean the console
+#   tasks: [
+#   	"test"
+#     #"dogma"
+# ]
 
