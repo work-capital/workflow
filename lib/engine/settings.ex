@@ -14,7 +14,7 @@ defmodule Engine.Settings do
   @doc """
     We get the default value from the map.
     ## Examples
-    iex> Engine.Config.get(:redis_port)
+    iex> Engine.Settings.get(:redis_port)
     6555
   """
   def get(key) do

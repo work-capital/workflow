@@ -1,10 +1,12 @@
+# Original work: Copyright (c) 2013. Saša Jurić
+# Modified work: Copyright (c) 2016 Work Capital - Henry Hazan - henry@work.capital
 defmodule Engine.Fsm do
   defmacro __using__(opts) do
     quote do
       import Fsm
       #import Kernel, except: [apply: 2]
 
-      defstruct uuid: nil, state: nil, version: 0, data: nil, commands: []
+      defstruct uuid: nil, state: nil, version: 0, data: [], commands: []
 
       defmodule Data do
         defstruct unquote(opts[:data])
@@ -35,24 +37,23 @@ defmodule Engine.Fsm do
         end)
       end
 
-      defp handle_action_response(fsm, {:next_state, next_state}) do
-        %__MODULE__{fsm | state: next_state}
-      end
+      defp handle_action_response(fsm, {:next_state, next_state}), do: %__MODULE__{fsm | state: next_state}
+      defp handle_action_response(fsm, {:new_data, new_data}),     do: %__MODULE__{fsm | data: new_data}
+      defp handle_action_response(fsm, {:respond, response}),      do: {response, fsm}
 
-      defp handle_action_response(fsm, {:new_data, new_data}) do
-        %__MODULE__{fsm | data: new_data}
-      end
 
-      defp handle_action_response(fsm, {:respond, response}) do
-        {response, fsm}
-      end
+      # utility function to add commands to the command list
+      def dispatch(command_list, command), do: command_list ++ command
+
+      # clean command list from 'data'
+      def clean_commands(fsm), do: %{fsm | data: []}
 
       # dispatch a command for the given process manager
-      defp dispatch(%__MODULE__{commands: commands} = process_manager, command) do
-        %__MODULE__{process_manager |
-          commands: commands ++ [command]
-        }
-      end
+      # defp dispatch(%__MODULE__{commands: commands} = process_manager, command) do
+      #   %__MODULE__{process_manager |
+      #     commands: commands ++ [command]
+      #   }
+      # end
 
       # Receives a single event and is used to mutate the process manager's internal state
       defp update(%__MODULE__{state: state} = process_manager, event) do

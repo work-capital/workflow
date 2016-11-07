@@ -1,9 +1,13 @@
 defmodule Engine.Storage.Storage do
   require Logger
+  @storage Engine.Settings.get(:storage)
   @moduledoc """
   Proxy layer to provide a Facade for different data storages. The ideia is to read from the config file
   what is the choosen storage, and route the call to the specifc implementation.
   """
+
+  @doc "If you want to know what storage is configured"
+  def print_storage(), do: @storage
 
   @doc "Save only one event to the stream."
   def append_event(stream, event) do

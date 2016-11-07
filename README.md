@@ -2,16 +2,35 @@ CQRS Eventsourcing Engine
 =========================
 
 ### Thanks
-Special thanks to [burmajam](https://github.com/burmajam) for sharing the very 
+Special thanks to: 
+
+[burmajam](https://github.com/burmajam) for sharing the very 
 well written extreme driver to connect to Eventstore. 
 
+[slashdotdash](https://github.com/slashdotdash/commanded) for sharing the CQRS
+framework, where many parts of the code here are from his framework.
 
-### TODO's 
 
 
+### Pure functions data structures
+In the folder engine > types you will find the data structures, so you can write
+your pure functions over them, under the "side effects" dimension. 
 
-We are using TDD [Test Driven Development] here, so use the command below to
-stay connected with your tests and recompile automaitcally every save.
+1. A pure function is given one or more input parameters.
+2. Its result is based solely off of those parameters and its algorithm. The algorithm will not be based on any hidden state in the class or object it’s contained in.
+3. It won’t mutate the parameters it’s given.
+4. It won’t mutate the state of its class or object.
+5. It doesn’t perform any I/O operations, such as reading from disk, writing to disk, prompting for input, or reading input.
+
+
+### Motivation
+
+* pure functional data structures for aggregates and process managers
+* one abstraction to implement side-effects
+* multiple data-stores
+* plugable message queue for publishing events
+
+### Develop
 
 ```
 mix test.watch
@@ -26,36 +45,6 @@ Engine.Bus.send_command(%{%Account.Command.CreateAccount{} | :id => "jsdf"})
 Engine.Bus.send_command(%{%Account.Command.DepositMoney{} | :id => "jsdf", :amount => 23})
 ```
 
-## Directory Structure
-* lib/engine - main app, where all start. It should start your aggregator, process
-  maangers, etc.. supervisors, static modules to help access data, etc.., also
-  contains the CQRS framework, with its macros. Note that macros are not using
-  the namespace. All the common files are here. 
-* account - example with an account bank aggregator. 
-* account/command - structs with account commands 
-* account/event   - structs with account events 
-* account/handler - command and event handlers, using macros. 
-* acount/model - state struct
-* account/supervisor.ex - supervisor for this aggregate
-
-
-
-## Resources
-Below you can see several resources I researched before writing this lib. 
-
-* [cqrs-erlang](https://github.com/bryanhunter/cqrs-with-erlang) - A memory
-  model using standard spawn functions CQRS in erlang. 
-* [gen-aggregate](https://github.com/burmajam/gen_aggregate/) - Macro for the
-  aggregate structure, using buffers. 
-* [cqrs-journey](https://msdn.microsoft.com/en-us/library/jj554200.aspx) - A
-  complete book on CQRS, with an OO approach. 
-
-* **JSON API** 
-https://robots.thoughtbot.com/testing-a-phoenix-elixir-json-api 
-https://github.com/maxcnunes/elixir-phoenix-rest-api 
-https://www.coshx.com/blog/2016/03/16/json-api-with-phoenix/ 
-https://blog.codeship.com/an-introduction-to-apis-with-phoenix/ 
-
 
 ### Eventstore
 Run a [docker](https://github.com/EventStore/eventstore-docker) instance in your machine. If you have mac, ask the sys-admin to start it in a linux server on you LAN or WAN. Access the web gui in http://localhost:2113 . User: admin, pass: changeit
@@ -64,6 +53,14 @@ Run a [docker](https://github.com/EventStore/eventstore-docker) instance in your
 ```
 docker run --name eventstore-node -it -p 2113:2113 -p 1113:1113 eventstore/eventstore
 ```
+
+#### Resources
+Below you can see several resources I researched before writing this lib. 
+
+* [cqrs-erlang](https://github.com/bryanhunter/cqrs-with-erlang) - A memory
+  model using standard spawn functions CQRS in erlang. 
+* [gen-aggregate](https://github.com/burmajam/gen_aggregate/) - Macro for the
+  aggregate structure, using buffers. 
 
 
 #### CQRS concepts

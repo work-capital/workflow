@@ -1,7 +1,7 @@
-defmodule EventStoreTest do
+defmodule Engine.Storage.EventStoreTest do
   use ExUnit.Case
   require Logger
-  alias Engine.EventStore
+  alias Engine.Storage.EventStore
 
 	defmodule PersonCreated, do: defstruct [:name]
   defmodule PersonChangedName, do: defstruct [:name]
@@ -41,7 +41,7 @@ defmodule EventStoreTest do
     id   = "test-3-" <> UUID.uuid4
     EventStore.append_event(id, %PersonCreated{name: "jim"})
     {:ok, res} = EventStore.load_events(id)
-    Logger.debug "Event Store Loaded Events: #{inspect res}"
+    #Logger.debug "Event Store Loaded Events: #{inspect res}"
     assert is_list(res) == true
   end
 
@@ -56,15 +56,15 @@ defmodule EventStoreTest do
   test "snapshot writing period, should be every 3 snapshots" do
     snapshot_period = 3
     id   = "test-4-" <> UUID.uuid4
-    {:ok, res1 } = Engine.EventStore.append_snapshot(id,
+    {:ok, res1 } = EventStore.append_snapshot(id,
                        %MyState{state: "hi", event_counter: 1}, snapshot_period)
-    {:ok, res2 } = Engine.EventStore.append_snapshot(id,
+    {:ok, res2 } = EventStore.append_snapshot(id,
                        %MyState{state: "hi", event_counter: 3}, snapshot_period)
-    {:ok, res3 } = Engine.EventStore.append_snapshot(id,
+    {:ok, res3 } = EventStore.append_snapshot(id,
                        %MyState{state: "hi", event_counter: 27}, snapshot_period)
-    {:ok, res4 } = Engine.EventStore.append_snapshot(id,
+    {:ok, res4 } = EventStore.append_snapshot(id,
                        %MyState{state: "hi", event_counter: 31}, snapshot_period)
-    Logger.debug "Snapshot: #{inspect res3}"
+    #Logger.debug "Snapshot: #{inspect res3}"
     assert res1 == :postponed
     assert res2 != :postponed
     assert res3 != :postponed
