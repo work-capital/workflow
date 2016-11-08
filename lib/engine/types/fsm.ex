@@ -6,7 +6,7 @@ defmodule Engine.Fsm do
       import Fsm
       #import Kernel, except: [apply: 2]
 
-      defstruct uuid: nil, state: nil, version: 0, data: [], commands: []
+      defstruct uuid: nil, state: nil, version: 0, data: [], subscriptions: []
 
       defmodule Data do
         defstruct unquote(opts[:data])
@@ -20,8 +20,9 @@ defmodule Engine.Fsm do
 
       @doc "create a new data structure with an uuid"
       def new(uuid) do
-        %__MODULE__{state: unquote(opts[:initial_state]), 
+        %__MODULE__{state: unquote(opts[:initial_state]),
                     data: unquote(opts[:data]),
+                    subscriptions: unquote(opts[:subscriptions]),
                     uuid: uuid}
       end
 
@@ -43,7 +44,7 @@ defmodule Engine.Fsm do
 
 
       # utility function to add commands to the command list
-      def dispatch(command_list, command), do: command_list ++ command
+      def dispatch(command_list, command), do: command_list ++ [command]
 
       # clean command list from 'data'
       def clean_commands(fsm), do: %{fsm | data: []}

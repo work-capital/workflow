@@ -26,12 +26,13 @@ defmodule FsmTest do
 
   defmodule RegistrationProcess do
     alias RegistrationProcess.Data
-    use Fsm, initial_state: :non_started, data: []
+    use Fsm, initial_state: :non_started, data: [], subscriptions: [%OrderPlaced{}, 
+            %ReservationAccepted{}, %ReservationAccepted{}, %PaymentReceived{}]
 
     # NON-STARTED
     defstate non_started do
 
-      defevent order_placed(order), data: commands do
+      defevent handle(%OrderPlaced{} = order), data: commands do
         commands = commands
           |> dispatch(%MakeSeatReservation{})
         respond(:ok, :awaiting_reservation, commands)
@@ -42,16 +43,16 @@ defmodule FsmTest do
 
     # AWAITING RESERVATION CONFIRMATION
     defstate awaiting_reservation do
-      defevent reservation_accepted(event), data: data do
-        commands = data
+      defevent handle(%ReservationAccepted{id: id} = reservation), data: commands do
+        commands = commands
           |> dispatch(%MarkOrderAsBooked{})
           |> dispatch(%ExpireOrder{})
         respond(:ok, :awaiting_payment, commands)
       end
 
 
-      defevent rejected(event), data: commands do
-        commands = commands 
+      defevent handle(%ReservationRejected{} = reservation), data: commands do
+        commands = commands
           |> dispatch(%RejectOrder{})
         respond(:ok, :completed, commands)
       end
@@ -63,14 +64,14 @@ defmodule FsmTest do
 
     # AWAITING PAYMENT
     defstate awaiting_payment do
-      defevent expire_order(event), data: commands do
+      defevent handle(%OrderPlaced{} = order), data: commands do
         commands = commands 
           |> dispatch(%CancelSeatReservation{})
           |> dispatch(%RejectOrder{})
         respond(:ok, :completed, commands)
       end
 
-      defevent payment_received(event), data: commands do
+      defevent handle(%PaymentReceived{} = payment), data: commands do
         commands = commands 
           |> dispatch(%CommitSeatReservation{})
         respond(:ok, :completed, commands)
@@ -94,7 +95,9 @@ defmodule FsmTest do
 
   test "response actions" do
     {response, fsm} = RegistrationProcess.new("13323")
-    |> RegistrationProcess.order_placed(%OrderPlaced{id: "res-0334"})
+    |> RegistrationProcess.handle(%OrderPlaced{id: "res-0334"})
+    
+    fsm = fsm |> RegistrationProcess.handle(%ReservationRejected{})
 
 
     IO.inspect "---------------->"
