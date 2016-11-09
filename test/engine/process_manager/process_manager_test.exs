@@ -1,4 +1,4 @@
-defmodule FsmTest do
+defmodule Engine.ProcessManager.ProcessManagerTest do
   use ExUnit.Case
 
 
@@ -43,6 +43,7 @@ defmodule FsmTest do
 
     # AWAITING RESERVATION CONFIRMATION
     defstate awaiting_reservation do
+
       defevent handle(%ReservationAccepted{id: id} = reservation), data: commands do
         commands = commands
           |> dispatch(%MarkOrderAsBooked{})
@@ -64,6 +65,7 @@ defmodule FsmTest do
 
     # AWAITING PAYMENT
     defstate awaiting_payment do
+
       defevent handle(%OrderPlaced{} = order), data: commands do
         commands = commands 
           |> dispatch(%CancelSeatReservation{})

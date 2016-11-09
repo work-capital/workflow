@@ -1,9 +1,10 @@
-defmodule Engine.AggregateTest do
+# Original Work: Copyright (c) 2016 Ben Smith (ben@10consulting.com) MIT License
+defmodule Engine.Aggregate.AggregateTest do
   use ExUnit.Case
   #doctest EventSourced.Aggregate
 
   defmodule ExampleAggregate do
-    use Engine.Aggregate, fields: [name: ""]
+    use Engine.Aggregate.Aggregate, fields: [name: ""]
 
     defmodule Events.NameAssigned do
       defstruct name: ""
