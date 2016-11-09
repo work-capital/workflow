@@ -32,12 +32,12 @@ defmodule Engine.Mixfile do
   defp deps do
     [
       #{:gen_stage, "~> 0.5"},   # substitute gen_event, add parallelist and backpresure for streams
-      {:poolboy, "~> 1.5"},     # pool for mongodb
-      {:sweet_xml, "~> 0.6.1"}, # wrapper for the erlang native XML parser (NFe)
+      {:poolboy, "~> 1.5"},      # pool for mongodb
+      {:sweet_xml, "~> 0.6.1"},  # wrapper for the erlang native XML parser (NFe)
       # storages
-      {:extreme, "~> 0.6.0"},   # eventstore driver
-      {:eventstore, "~> 0.6.1"},
-      {:mongodb, "~> 0.1.1"},   # support mongo 3.2, pools, etc.[https://github.com/ericmj/mongodb]
+      {:extreme, "~> 0.6.0"},    # eventstore driver
+      {:eventstore, "~> 0.6.1"}, # postgres   driver [mix event_store.create]
+      {:mongodb, "~> 0.1.1"},    # support mongo 3.2, pools, etc.[https://github.com/ericmj/mongodb]
       # utils
       {:monadex, "~> 1.0"},
       {:calendar, "~> 0.16.1"},  # for easy calendar calculations [hex.pm/packages/calendar]

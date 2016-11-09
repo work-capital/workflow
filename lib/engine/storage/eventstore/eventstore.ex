@@ -1,4 +1,4 @@
-defmodule Engine.Storage.EventStore do
+defmodule Engine.Storage.Eventstore do
   require Logger
   alias Extreme.Messages.ReadEventCompleted
   @event_store     Engine.EventStore
@@ -25,7 +25,7 @@ defmodule Engine.Storage.EventStore do
   end
 
   @doc "Load all events for that stream"
-  def load_events(stream) do
+  def load_all_events(stream) do
     Engine.Messages.read_events(stream)
       |> send_to_eventstore
       |> extract_events
@@ -79,7 +79,7 @@ defmodule Engine.Storage.EventStore do
   end
 
   defp deserialize(data, struct \\ nil),
-    do: Engine.Serializer.decode(data, struct)
+    do: Engine.Storage.Serializer.decode(data, struct)
     #do: :erlang.binary_to_term(data)
     # do: Poison.decode!(data)
 

@@ -7,9 +7,11 @@ import_config "#{Mix.env}.exs"
 #  ENGINE
 #-------------------------------
 
+# Choose the event storage, can be Engine.Storage.Eventstore
+# or Engine.Storage.Postgres
 
 config :engine,
-  storage: Eventstore,
+  storage: Engine.Storage.Eventstore,
   nodes: [:'master@localhost', :'slave1@localhost'],          # to use with SYN if we have many nodes
   snapshot_period: 50
 

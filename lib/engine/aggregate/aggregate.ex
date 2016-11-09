@@ -1,5 +1,5 @@
 # Original Work: Copyright (c) 2016 Ben Smith (ben@10consulting.com)
-defmodule Engine.Aggregate do
+defmodule Engine.Aggregate.Aggregate do
   defmacro __using__(fields: fields) do
     quote do
       import Kernel, except: [apply: 2]
