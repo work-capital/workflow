@@ -1,6 +1,10 @@
 CQRS Eventsourcing Engine
 =========================
 
+*IMPORTANT*: use only for research, and please, feedback. we will update when we
+start using in production
+
+
 ### Thanks
 Special thanks to: 
 

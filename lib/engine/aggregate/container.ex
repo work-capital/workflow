@@ -1,10 +1,16 @@
-defmodule Engine.Aggregate.State do
+defmodule Engine.Aggregate.Container do
   @moduledoc """
-  This module encapsulates the Database side-efects over the aggregate State. 
+  This module encapsulates the Database side-efects over the aggregate Container. 
   So the data structure from server state (that contains the aggregate data structure) 
   and rehydrate it with data, from snapshots and events.
   Easier to test, debug and mantain :) . So we focus only on retrieving and persisting data here,
   creating new pids, and other decisions should be make by the server, repository and router.
+
+  Yes, I know that this Container is the server's state, but the word state is too wide, Container
+  is better because in relation of the Aggregate data structure, this server's state is holding 
+  another datastructure plus some metadata (uuid, etc.). If you come from Enterprise Java Beans,
+  you will love this Container, specially that it can take 18 microseconds to start some millions
+  of them ;)
 
   Note that when we snapshot, we save the server state, that contains the aggregate data structure,
   and we need to replay the remaining events only from the data structure. 
@@ -15,36 +21,41 @@ defmodule Engine.Aggregate.State do
             aggregate: nil   # the data structure
 
   require Logger
-  alias Engine.Aggregate.State
+  alias Engine.Aggregate.Container
   alias Engine.Storage.Storage
 
-  @type aggregate :: struct()        # the aggregate data structure
-  @type server    :: struct()        # the server that holds the aggregate data structure
-  @type position  :: integer         # position saved on the stream
+  @typedoc "positions -> [first, last]"
+  @type aggregate :: struct()           # the aggregate data structure
+  @type server    :: struct()           # the server that holds the aggregate data structure
+  @type positions :: list(integer)      # first postion of the first event, and last from the last
   @type events    :: [struct()]
   @type uuid      :: String.t
 
 
-  @spec append_snapshot(server)  :: {:error, any()} | {:ok, position}
+  @spec append_snapshot(server)  :: {:error, any()} | {:ok, positions}
   @spec load_events(server)      :: {:error, any()} | {:ok, events}
   @spec load_snapshot(aggregate) :: {:error, any()} | {:ok, server}
 
 
-  def append_events(%State{uuid: uuid, aggregate: aggregate}), do:
+  @doc "returns [first, last] positions of the appended events"
+  def append_events(%Container{uuid: uuid, aggregate: aggregate}), do:
     Storage.append_events(uuid, aggregate.pending_events)
 
-  def append_snapshot(%State{uuid: uuid} = server), do:
+  @doc "returns [first, last] positions of the appended events"
+  def append_snapshot(%Container{uuid: uuid} = server), do:
     Storage.append_snapshot(uuid, server)
 
-  def load_events(%State{uuid: uuid} = server), do:
+  @doc "returns [first, last] positions of the appended events"
+  def load_events(%Container{uuid: uuid} = server), do:
     Storage.load_events(uuid)
 
-  def load_snapshot(%State{uuid: uuid}), do:
+  @doc "returns [first, last] positions of the appended events"
+  def load_snapshot(%Container{uuid: uuid}), do:
     Storage.load_snapshot(uuid)
 
 
   # @doc "if we succeed in appending events, we clean the data structure, if not, we send it back"
-  # def append_events(%State{uuid: uuid, aggregate: aggregate} = server) do
+  # def append_events(%Container{uuid: uuid, aggregate: aggregate} = server) do
   #   case Storage.append_events(uuid, aggregate.pending_events) do
   #     {:ok, counter}   -> server = %{server | pending_events: []}
   #     {:error, reason} ->
@@ -94,7 +105,7 @@ defmodule Engine.Aggregate.State do
   #   :ok = EventStore.record_snapshot(%EventStore.Snapshots.SnapshotData{
   #     source_uuid: process_state_uuid(state),
   #     source_version: 1,
-  #     source_type: Atom.to_string(Module.concat(process_manager_module, State)),
+  #     source_type: Atom.to_string(Module.concat(process_manager_module, Container)),
   #     data: process_state.state
   #   })
   # end

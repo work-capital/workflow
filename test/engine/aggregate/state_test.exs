@@ -1,6 +1,6 @@
-defmodule Engine.Aggregate.StateTest do
+defmodule Engine.Aggregate.ContainerTest do
   use ExUnit.Case
-  alias Engine.Aggregate.State
+  alias Engine.Aggregate.Container
   #doctest EventSourced.Aggregate
 
   defmodule ExampleAggregate do
@@ -28,14 +28,17 @@ defmodule Engine.Aggregate.StateTest do
 
 
   test "applies event" do
+    uuid = UUID.uuid4
     aggregate =
       ExampleAggregate.new("uuid")
       |> ExampleAggregate.assign_name("Ben")
       |> ExampleAggregate.assign_tel("66634234")
 
-    state = %State{module: ExampleAggregate, uuid: "ID-123", aggregate: aggregate}
-    {:ok, position} = State.append_events(state)
-    IO.inspect position
+    container = %Container{module: ExampleAggregate, uuid: uuid, aggregate: aggregate}
+    IO.inspect container
+    {:ok, [first, last]} = Container.append_events(container)
+    assert last == 1
+    #assert position = 1 
 
     assert aggregate.state == %ExampleAggregate.State{name: "Ben", tel: "66634234"}
     assert aggregate.uuid == "uuid"

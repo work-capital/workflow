@@ -14,14 +14,6 @@ defmodule Engine.Storage.EventstoreTest do
     :ok = Application.start(:engine)
   end
 
-  test "save ONE event to eventstore" do
-    id   = "test-1-" <> UUID.uuid4
-    {:ok, position}   = Storage.append_event(id ,%PersonCreated{name: "jim"})
-    {:ok, position2}  = Storage.append_event(id ,%PersonChangedName{name: "joe"})
-    #IO.inspect message
-    assert is_integer(position) == true
-
-  end
 
   test "save MANY events to eventstore" do
     id   = "test-2-" <> UUID.uuid4
@@ -31,16 +23,18 @@ defmodule Engine.Storage.EventstoreTest do
     events = [ %PersonCreated{name: "jow"},
                %PersonCreated{name: "bow"},
                %PersonChangedName{name: "gue"}]
-    {:ok, position} = Storage.append_events(id, events)
-    assert position == 2
-    {:ok, position2} = Storage.append_events(id, event_list)
-    assert position2 == 12
+    {:ok, [first, last]} = Storage.append_events(id, events)
+    assert first == 0
+    assert last  == 2
+    {:ok, [first2, last2]} = Storage.append_events(id, event_list)
+    assert first2 == 3
+    assert last2  == 12
   end
 
 
   test "read events from eventstore" do
     id   = "test-3-" <> UUID.uuid4
-    Storage.append_event(id, %PersonCreated{name: "jim"})
+    Storage.append_events(id, [%PersonCreated{name: "jim"}])
     {:ok, res} = Storage.load_all_events(id)
     #Logger.debug "Event Store Loaded Events: #{inspect res}"
     assert is_list(res) == true
