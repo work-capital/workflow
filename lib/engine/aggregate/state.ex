@@ -1,7 +1,7 @@
-defmodule Engine.Aggregate.Persistance do
+defmodule Engine.Aggregate.State do
   @moduledoc """
-  This module encapsulates the Database side-efects only. So we receive a data
-  structure from server state (that contains the aggregate data structure) 
+  This module encapsulates the Database side-efects over the aggregate State. 
+  So the data structure from server state (that contains the aggregate data structure) 
   and rehydrate it with data, from snapshots and events.
   Easier to test, debug and mantain :) . So we focus only on retrieving and persisting data here,
   creating new pids, and other decisions should be make by the server, repository and router.
@@ -9,34 +9,42 @@ defmodule Engine.Aggregate.Persistance do
   Note that when we snapshot, we save the server state, that contains the aggregate data structure,
   and we need to replay the remaining events only from the data structure. 
   """
+
+  defstruct module: nil,     # the module name of the aggregate pure functional data structure
+            uuid: nil,       # uuid
+            aggregate: nil   # the data structure
+
   require Logger
-  alias Engine.Aggregate.Server
-  # defmodule Ag do
-  #   use Engine.Aggregate.Aggregate, fields: [:jim]
-  # end
-  #alias Engine.Aggregate.Aggregate
+  alias Engine.Aggregate.State
   alias Engine.Storage.Storage
 
-  @type aggregate :: struct()
-  @type server    :: struct()
+  @type aggregate :: struct()        # the aggregate data structure
+  @type server    :: struct()        # the server that holds the aggregate data structure
+  @type position  :: integer         # position saved on the stream
   @type events    :: [struct()]
-
-  @spec load_events(aggregate)   :: {:error, any()} | {:ok, events}
-  @spec load_snapshot(aggregate) :: {:error, any()} | {:ok, events}
+  @type uuid      :: String.t
 
 
+  @spec append_snapshot(server)  :: {:error, any()} | {:ok, position}
+  @spec load_events(server)      :: {:error, any()} | {:ok, events}
+  @spec load_snapshot(aggregate) :: {:error, any()} | {:ok, server}
 
-  def load_events(%Server{uuid: uuid, module: module} = server) do
-    events = Storage.load_events(uuid)
-    module.load(uuid, events)
-  end
 
-  def load_snapshot(%Server{uuid: uuid} = aggregate), do:
+  def append_events(%State{uuid: uuid, aggregate: aggregate}), do:
+    Storage.append_events(uuid, aggregate.pending_events)
+
+  def append_snapshot(%State{uuid: uuid} = server), do:
+    Storage.append_snapshot(uuid, server)
+
+  def load_events(%State{uuid: uuid} = server), do:
+    Storage.load_events(uuid)
+
+  def load_snapshot(%State{uuid: uuid}), do:
     Storage.load_snapshot(uuid)
 
 
   # @doc "if we succeed in appending events, we clean the data structure, if not, we send it back"
-  # def append_events(%Server{uuid: uuid, aggregate: aggregate} = server) do
+  # def append_events(%State{uuid: uuid, aggregate: aggregate} = server) do
   #   case Storage.append_events(uuid, aggregate.pending_events) do
   #     {:ok, counter}   -> server = %{server | pending_events: []}
   #     {:error, reason} ->
