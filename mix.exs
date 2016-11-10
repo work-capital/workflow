@@ -3,7 +3,7 @@ defmodule Engine.Mixfile do
 
   def project do
     [app: :engine,
-     version: "0.1.1",
+     version: "0.1.2",
      elixir: "~> 1.3",
      description: description(),
      package: package(),
@@ -28,7 +28,6 @@ defmodule Engine.Mixfile do
       {:eventstore, "~> 0.6.1"}, # postgres   driver [mix event_store.create]
       {:mongodb, "~> 0.1.1"},    # support mongo 3.2, pools, etc.[https://github.com/ericmj/mongodb]
       # utils
-      {:monadex, "~> 1.0"},
       {:calendar, "~> 0.16.1"},  # for easy calendar calculations [hex.pm/packages/calendar]
       {:syn, "~> 1.5"}, # much more simple and powerfull than gproc, Alex
       {:uuid, "~> 1.1.4" },
