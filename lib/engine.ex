@@ -18,23 +18,12 @@ defmodule Engine do
     ]
     opts = [strategy: :one_for_one, name: Engine.Supervisor]
     app_response = Supervisor.start_link(children, opts)
-    Logger.info "Starting obligation domain: #{inspect init_account()}"
+    #Logger.info "Starting obligation domain: #{inspect init_account()}"
 
     # return the main application
     app_response
   end
 
-  defp init_account do
-    case Account.Supervisor.start_link() do
-      {:ok, pid} ->
-        Account.Handler.Command.add_handler()
-        # Obligation.Handler.Event.add_handler()
-        # Obligation.Handler.Command.add_handler()
-        {:ok, pid}
-
-      error -> {:error, error}
-    end
-  end
   # Ensure that Syn is initialized only once on a node. [see doc]
   def start_syn() do
     :syn.start()

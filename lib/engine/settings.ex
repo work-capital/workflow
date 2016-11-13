@@ -1,4 +1,4 @@
-defmodule Engine.Config do
+defmodule Engine.Settings do
   @moduledoc """
   It gives the configuration value based on key, but if the configuration was not
   specified in the config.exs file, the default configuration will be used
@@ -14,7 +14,7 @@ defmodule Engine.Config do
   @doc """
     We get the default value from the map.
     ## Examples
-    iex> Engine.Config.get(:redis_port)
+    iex> Engine.Settings.get(:redis_port)
     6555
   """
   def get(key) do
