@@ -40,8 +40,8 @@ defmodule Engine.Storage.Storage do
     @storage.load_events(stream, position)
 
   @doc "Save snapshot after checking the frequency config, adding -snapshot to its namespace"
-  def append_snapshot(stream, state, period \\ @snapshot_period), do:
-    @storage.append_snapshot(stream, state, period)
+  def append_snapshot(stream, state, counter, period \\ @snapshot_period), do:
+    @storage.append_snapshot(stream, state, counter, period)
 
   @doc "Load the last snapshot for that stream"
   def load_snapshot(stream), do:

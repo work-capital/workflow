@@ -18,9 +18,10 @@ defmodule Engine.Aggregate.Container do
   and we need to replay the remaining events only from the data structure. 
   """
 
-  defstruct uuid: nil,     # the module name of the aggregate pure functional data structure
-            module: nil,       # uuid
-            aggregate: nil   # the data structure
+  defstruct uuid: nil,            # uuid, obvious
+            module: nil,          # the module name of the aggregate pure functional data structure 
+            snapshot_period: nil, # every number of event, we snapshot
+            aggregate: nil        # the data structure
 
   require Logger
   alias Engine.Aggregate.Container
@@ -29,49 +30,101 @@ defmodule Engine.Aggregate.Container do
   @typedoc "positions -> [first, last]"
   @type aggregate :: struct()           # the aggregate data structure
   @type container :: struct()           # the server that holds the aggregate data structure
-  @type positions :: list(integer)      # first postion of the first event, and last from the last
+  @type positions :: list(integer)      # positions from first and last saved events, i.e. {:ok, [3,5]}
   @type events    :: [struct()]
   @type uuid      :: String.t
 
 
-  @spec append_snapshot(container)  :: {:error, any()} | {:ok, positions}
-  @spec load_events(container)      :: {:error, any()} | {:ok, events}
-  @spec load_snapshot(container)    :: {:error, any()} | {:ok, container}
+
+  @spec append_events(aggregate)           :: aggregate
+  @spec append_snapshot(aggregate)         :: {:error, any()} | {:ok, positions}
+  @spec append_events_snapshot(container)  :: {:error, any()} | {:ok, positions}
+  @spec load_all_events(container)         :: {:error, any()} | {:ok, events}
+  @spec load_events(container)             :: {:error, any()} | {:ok, events}
+  @spec load_snapshot(container)           :: {:error, any()} | {:ok, container}
 
 
   @doc """
-  Search for snapshot and replay from that state position, if we find the snapshot, we try to replay
-  events from the event counter position, and if not, we try to replay from scratch, and if not, 
+  If we find a snapshot for this stream, we replay from that state position, 
+  and if the snapshot is not find, we try to replay from scratch, and if not, 
   we give back the same empty container, once it's suposed to be a new one
   """
-  def rehydrate(%Container{uuid: uuid, module: module, aggregate: aggregate} = container) do
+  def rehydrate(%Container{uuid: uuid, module: module, 
+                           snapshot_period: snapshot_period, aggregate: aggregate} = container) do
     case load_snapshot(container) do
-      {:ok, loaded_container} -> load_events(loaded_container)
-      {:error, reason}        -> load_events(container)
+      {:ok, loaded_container}  -> rebuild_from_snapshot(loaded_container)
+      {:error, reason}         -> load_all_events(container)
     end
   end
 
-  @doc "load events from a specific position"
-  def load_events(%Container{uuid: uuid, aggregate: aggregate} = server) do
-    position = aggregate.counter
-    Storage.load_events(uuid, position)
+  @doc """
+  Main function API for writing, with auto-snapshot, that means, you append the events, and it
+  will check inside the container, the event position and the snapshot period, and if it matches,
+  it will automaticall generate a snapshot for this container
+  """
+  def append_events_snapshot(aggregate) do
+    aggregate
+      |> append_events_snapshot
+      |> append_events
   end
+
+  @doc "returns [first, last] positions of the appended events"
+  def append_snapshot(aggregate) do
+    case Storage.append_snapshot(aggregate.uuid, aggregate,
+                                 aggregate.counter, aggregate.snapshot_period) do
+      {:ok, [first, last]} -> aggregate
+      {:error, reason}     ->
+        Logger.error "Snapshoting aggregate failed for #{aggregate} because #{reason}"
+        aggregate
+    end
+  end
+
+
+  @doc "append events to the stream, reset pending events and update counter"
+  def append_events(aggregate) do
+    case Storage.append_events(aggregate.uuid, aggregate.pending_events) do
+      {:ok, [first, last]} -> %{aggregate | pending_events: []}
+      {:error, reason}     ->
+        Logger.error "Appending events failed for #{aggregate} because #{reason}"
+        aggregate
+    end
+  end
+
+  @doc "recostitute a containter from scratch"
+  def rebuild_from_events(%Container{uuid: uuid, module: module, 
+                                     snapshot_period: s_period} = container) do
+    case load_all_events(container) do
+      {:ok, events} -> %{container | aggregate: module.new(uuid, s_period) 
+                                                  |> module.load(events)}
+      {:error, _  } -> container
+    end
+  end
+
+  @doc "rebuild a container from a given snapshot, and replay events if found afterwards"
+  def rebuild_from_snapshot(%Container{uuid: uuid, module: module, snapshot_period: s_period, 
+                                       aggregate: aggregate} = container) do
+    position = container.aggregate.counter
+    case load_events(container) do
+      {:ok, events} -> %{container | aggregate: aggregate |> module.load(events)}
+      {:error, _  } -> container
+    end
+  end
+
 
   @doc "load events from scratch"
   def load_all_events(%Container{uuid: uuid} = server), do:
     Storage.load_all_events(uuid)
 
-  @doc "returns [first, last] positions of the appended events"
-  def append_events(%Container{uuid: uuid, aggregate: aggregate}), do:
-    Storage.append_events(uuid, aggregate.pending_events)
+  @doc "load events from a specific position [extracts position from the aggregate inside]"
+  def load_events(%Container{uuid: uuid, aggregate: aggregate} = server), do:
+    Storage.load_events(uuid, aggregate.counter)
 
-  @doc "returns [first, last] positions of the appended events"
-  def append_snapshot(%Container{uuid: uuid} = server), do:
-    Storage.append_snapshot(uuid, server)
+
 
   @doc "load the last snapshot for this container"
   def load_snapshot(%Container{uuid: uuid}), do:
     Storage.load_snapshot(uuid)
+
 
 
   # @doc "if we succeed in appending events, we clean the data structure, if not, we send it back"

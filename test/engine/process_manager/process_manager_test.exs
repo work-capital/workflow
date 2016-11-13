@@ -67,14 +67,14 @@ defmodule Engine.ProcessManager.ProcessManagerTest do
     defstate awaiting_payment do
 
       defevent handle(%OrderPlaced{} = order), data: commands do
-        commands = commands 
+        commands = commands
           |> dispatch(%CancelSeatReservation{})
           |> dispatch(%RejectOrder{})
         respond(:ok, :completed, commands)
       end
 
       defevent handle(%PaymentReceived{} = payment), data: commands do
-        commands = commands 
+        commands = commands
           |> dispatch(%CommitSeatReservation{})
         respond(:ok, :completed, commands)
       end
@@ -98,13 +98,12 @@ defmodule Engine.ProcessManager.ProcessManagerTest do
   test "response actions" do
     {response, fsm} = RegistrationProcess.new("13323")
     |> RegistrationProcess.handle(%OrderPlaced{id: "res-0334"})
-    
     fsm = fsm |> RegistrationProcess.handle(%ReservationRejected{})
 
 
-    IO.inspect "---------------->"
-    IO.inspect fsm
-    IO.inspect response
+    # IO.inspect "---------------->"
+    # IO.inspect fsm
+    # IO.inspect response
 
     # assert(response == :ok)
     # assert(ResponseFsm.state(fsm) == :running)

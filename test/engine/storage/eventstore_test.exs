@@ -6,7 +6,7 @@ defmodule Engine.Storage.EventstoreTest do
 
 	defmodule PersonCreated, do: defstruct [:name]
   defmodule PersonChangedName, do: defstruct [:name]
-  defmodule MyState, do: defstruct state: nil, event_counter: nil, changes: []
+  defmodule MyState, do: defstruct state: nil, counter: nil, changes: []
 
 
 	setup_all do
@@ -40,25 +40,18 @@ defmodule Engine.Storage.EventstoreTest do
     assert is_list(res) == true
   end
 
-  # test "read events from eventstore from a specific position that does not exist" do
-  #   id   = UUID.uuid4
-  #   Storage.append_event("people4",%PersonCreated{name: "jim"})
-  #   {:ok, res} = eventStore.load_events("people4", 23423)
-  #   IO.inspect res
-  #   assert is_list(res) == true
-  # end
 
   test "snapshot writing period, should be every 3 snapshots" do
     snapshot_period = 3
     id   = "test-4-" <> UUID.uuid4
     {:ok, res1 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", event_counter: 1}, snapshot_period)
+                       %MyState{state: "hi", counter: 1}, 1,snapshot_period)
     {:ok, res2 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", event_counter: 3}, snapshot_period)
+                       %MyState{state: "hi", counter: 3}, 3, snapshot_period)
     {:ok, res3 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", event_counter: 27}, snapshot_period)
+                       %MyState{state: "hi", counter: 27}, 27,snapshot_period)
     {:ok, res4 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", event_counter: 31}, snapshot_period)
+                       %MyState{state: "hi", counter: 31}, 31, snapshot_period)
     #Logger.debug "Snapshot: #{inspect res3}"
     assert res1 == :postponed
     assert res2 != :postponed
@@ -73,11 +66,12 @@ defmodule Engine.Storage.EventstoreTest do
     id   = "test-5-" <> UUID.uuid4
     for n <- 1..26, do:
       Storage.append_snapshot(id,
-                       %MyState{state: "good shape", event_counter: n},
+                       %MyState{state: "good shape", counter: n},
+                       n,
                        snapshot_period)
 
     {:ok, res}   = Storage.load_snapshot(id)
-    assert res  == %MyState{state: "good shape", event_counter: 24}
+    assert res  == %MyState{state: "good shape", counter: 24}
   end
 
   test "write and try to read a non existing snapshot" do

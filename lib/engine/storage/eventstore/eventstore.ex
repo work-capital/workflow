@@ -2,8 +2,8 @@ defmodule Engine.Storage.Eventstore do
   require Logger
   alias Extreme.Messages.ReadEventCompleted
   @event_store     Engine.EventStore
-  @snapshot        "-snapshot"                             # to namespace the snapshot stream
-  @snapshot_period Engine.Settings.get(:snapshot_period)
+  @snapshot        "-SNAPSHOT"                             # to namespace the snapshot stream
+  #@snapshot_period Engine.Settings.get(:snapshot_period)
   @moduledoc """ 
   Interface with the Extreme EventStore driver to save and read to EVENTSTORE.
   Note that the Engine supervisor starts the driver naming it as 'EventStore'.
@@ -33,18 +33,17 @@ defmodule Engine.Storage.Eventstore do
   end
 
 
-  @doc "Save snapshot after checking the frequency config, adding -snapshot to its namespace"
-  def append_snapshot(stream, state, period \\ @snapshot_period) do
-    #IO.inspect "------------------------>>>>> state"
-    #IO.inspect state
-    case mod(state.event_counter, period) do
+  @doc "auto snapshot after checking the frequency config, adding -snapshot to its namespace"
+  def append_snapshot(stream, state, counter, period) do
+    # IO.inspect "------------------------>>>>> state"
+    # IO.inspect counter
+    case mod(counter, period) do
       true  -> {:ok, [first, last]} = Engine.Messages.write_events(stream <> @snapshot, [state])
                           |> send_to_eventstore
                           |> extract_event_numbers
       false -> {:ok, :postponed}
     end
   end
-
 
   @doc "Load the last snapshot for that stream"
   def load_snapshot(stream) do
