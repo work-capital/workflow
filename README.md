@@ -1,6 +1,10 @@
 CQRS Eventsourcing Engine
 =========================
 
+### IMPORTANT
+Only the data structures are working, for testing and collecting feedbacks. 
+We believe that at the begining of December 2016, the framework will be usable.
+
 ### Thanks
 Special thanks to: 
 
