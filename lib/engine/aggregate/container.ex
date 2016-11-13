@@ -1,23 +1,25 @@
 defmodule Engine.Aggregate.Container do
   @moduledoc """
-  This module encapsulates the Database side-efects over the aggregate Container. 
-  So the data structure from server state (that contains the aggregate data structure) 
-  and rehydrate it with data, from snapshots and events.
+  The triangle: Aggregate Data Structure + Server's State (Container) + Side Effects
+  This module encapsulates the Database side-efects over the aggregate's container. 
+  The ideia is to have one point to reload the aggregate that lives inside the server's state,
+  that I called here: container. So the logic needed to find it on snapshot and replay from the
+  events that come afterwards are all encapsulated here. Theorically, it should be private functions
+  inside the aggregate's server, but for easier testing, debuging, and maintaining, the rehydrate
+  function will be the interface for this small sub-engine.
   Easier to test, debug and mantain :) . So we focus only on retrieving and persisting data here,
   creating new pids, and other decisions should be make by the server, repository and router.
 
-  Yes, I know that this Container is the server's state, but the word state is too wide, Container
-  is better because in relation of the Aggregate data structure, this server's state is holding 
-  another datastructure plus some metadata (uuid, etc.). If you come from Enterprise Java Beans,
-  you will love this Container, specially that it can take 18 microseconds to start some millions
+  This name: contanier is also a way to fix the trauma, if you come from Enterprise Java Beans,
+  you will love it, specially that it can take some miliseconds to start some millions
   of them ;)
 
   Note that when we snapshot, we save the server state, that contains the aggregate data structure,
   and we need to replay the remaining events only from the data structure. 
   """
 
-  defstruct module: nil,     # the module name of the aggregate pure functional data structure
-            uuid: nil,       # uuid
+  defstruct uuid: nil,     # the module name of the aggregate pure functional data structure
+            module: nil,       # uuid
             aggregate: nil   # the data structure
 
   require Logger
@@ -26,16 +28,38 @@ defmodule Engine.Aggregate.Container do
 
   @typedoc "positions -> [first, last]"
   @type aggregate :: struct()           # the aggregate data structure
-  @type server    :: struct()           # the server that holds the aggregate data structure
+  @type container :: struct()           # the server that holds the aggregate data structure
   @type positions :: list(integer)      # first postion of the first event, and last from the last
   @type events    :: [struct()]
   @type uuid      :: String.t
 
 
-  @spec append_snapshot(server)  :: {:error, any()} | {:ok, positions}
-  @spec load_events(server)      :: {:error, any()} | {:ok, events}
-  @spec load_snapshot(aggregate) :: {:error, any()} | {:ok, server}
+  @spec append_snapshot(container)  :: {:error, any()} | {:ok, positions}
+  @spec load_events(container)      :: {:error, any()} | {:ok, events}
+  @spec load_snapshot(container)    :: {:error, any()} | {:ok, container}
 
+
+  @doc """
+  Search for snapshot and replay from that state position, if we find the snapshot, we try to replay
+  events from the event counter position, and if not, we try to replay from scratch, and if not, 
+  we give back the same empty container, once it's suposed to be a new one
+  """
+  def rehydrate(%Container{uuid: uuid, module: module, aggregate: aggregate} = container) do
+    case load_snapshot(container) do
+      {:ok, loaded_container} -> load_events(loaded_container)
+      {:error, reason}        -> load_events(container)
+    end
+  end
+
+  @doc "load events from a specific position"
+  def load_events(%Container{uuid: uuid, aggregate: aggregate} = server) do
+    position = aggregate.counter
+    Storage.load_events(uuid, position)
+  end
+
+  @doc "load events from scratch"
+  def load_all_events(%Container{uuid: uuid} = server), do:
+    Storage.load_all_events(uuid)
 
   @doc "returns [first, last] positions of the appended events"
   def append_events(%Container{uuid: uuid, aggregate: aggregate}), do:
@@ -45,11 +69,7 @@ defmodule Engine.Aggregate.Container do
   def append_snapshot(%Container{uuid: uuid} = server), do:
     Storage.append_snapshot(uuid, server)
 
-  @doc "returns [first, last] positions of the appended events"
-  def load_events(%Container{uuid: uuid} = server), do:
-    Storage.load_events(uuid)
-
-  @doc "returns [first, last] positions of the appended events"
+  @doc "load the last snapshot for this container"
   def load_snapshot(%Container{uuid: uuid}), do:
     Storage.load_snapshot(uuid)
 

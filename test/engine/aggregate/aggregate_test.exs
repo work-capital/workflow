@@ -2,6 +2,7 @@
 defmodule Engine.Aggregate.AggregateTest do
   use ExUnit.Case
   #doctest EventSourced.Aggregate
+  alias Engine.Aggregate.Container
 
   defmodule ExampleAggregate do
     use Engine.Aggregate.Aggregate, fields: [name: "", tel: ""]
@@ -17,7 +18,6 @@ defmodule Engine.Aggregate.AggregateTest do
       aggregate
       |> update(%Events.TelAssigned{tel: tel})
 
-
     def apply(%ExampleAggregate.State{} = state, %Events.NameAssigned{} = event),
       do: %ExampleAggregate.State{state | name: event.name }
 
@@ -26,13 +26,14 @@ defmodule Engine.Aggregate.AggregateTest do
 
   end
 
-  test "assigns aggregate fields to state struct" do
+ test "assigns aggregate fields to state struct" do
     aggregate = ExampleAggregate.new("uuid")
 
     assert aggregate.state == %ExampleAggregate.State{name: ""}
     assert aggregate.uuid == "uuid"
     assert aggregate.version == 0
     assert length(aggregate.pending_events) == 0
+    assert aggregate.counter == 0
   end
 
   test "applies event" do
@@ -45,6 +46,7 @@ defmodule Engine.Aggregate.AggregateTest do
     assert aggregate.uuid == "uuid"
     assert aggregate.version == 2
     assert length(aggregate.pending_events) == 2
+    assert aggregate.counter == 2
   end
 
   test "load from events, given an uuid" do
@@ -57,9 +59,11 @@ defmodule Engine.Aggregate.AggregateTest do
     assert aggregate.version == 2
     # pending events should be empty after replaying events
     assert length(aggregate.pending_events) == 0
+    assert aggregate.counter == 2
   end
 
-  test "load from events from a snapshot point" do
+
+  test "pure data structure aggregate rehydratation cycle" do
     aggregate =
       ExampleAggregate.new("uuid")
       |> ExampleAggregate.assign_name("Ben")
@@ -68,10 +72,19 @@ defmodule Engine.Aggregate.AggregateTest do
               %ExampleAggregate.Events.TelAssigned{tel: "66634234"}])
       |> ExampleAggregate.assign_name("Jim")
 
+
     assert aggregate.state == %ExampleAggregate.State{name: "Jim", tel: "66634234"}
     assert aggregate.uuid == "uuid"
+    assert aggregate.counter == 4
     assert aggregate.version == 3
     assert length(aggregate.pending_events) == 1
+
+    aggregate_from_snapshot = aggregate
+      |> ExampleAggregate.load([
+              %ExampleAggregate.Events.NameAssigned{name: "Bon"},
+              %ExampleAggregate.Events.TelAssigned{tel: "66634234"}])
+    assert aggregate_from_snapshot.counter == 6
+
   end
 
 

@@ -5,7 +5,11 @@ defmodule Engine.Aggregate.Aggregate do
       import Kernel, except: [apply: 2]
       @module __MODULE__
 
-      defstruct uuid: nil, version: 0, pending_events: [], state: nil
+      defstruct uuid: nil,                # unique id
+                counter: 0,               # event counter, we receive the event position from the db
+                version: 0,
+                pending_events: [],       # events pending to be applied [we reset it after applying
+                state: nil
 
       defmodule State, do: defstruct unquote(fields)
 
@@ -13,26 +17,33 @@ defmodule Engine.Aggregate.Aggregate do
       def new(uuid), do: %@module{uuid: uuid, state: %@module.State{}}
 
       @doc "Create a new aggregate struct from a given aggregate with its previous state"
-      def load(%@module{uuid: uuid, state: state}, events) when is_list(events) do
+      def load(%@module{uuid: uuid, counter: counter, state: state}, events) when is_list(events) do
+        event_l = length(events)
+        counter = counter + event_l    # the position is what was on state + the number of events
         new_state =
           Enum.reduce(events, state, &@module.apply(&2, &1))
-          %@module{uuid: uuid, state: new_state, version: length(events), pending_events: []}
+          %@module{uuid: uuid, counter: counter, state: new_state, version: event_l, pending_events: []}
       end
 
       @doc "Rebuild the aggregate's state from a given list of previously raised domain events"
       def load(uuid, events) when is_list(events) do
         state =
           Enum.reduce(events, %@module.State{}, &@module.apply(&2, &1))
-          %@module{uuid: uuid, state: state, version: length(events), pending_events: []}
+          event_l = length(events) # since we played from scratch, the event length = counter
+          %@module{uuid: uuid, counter: event_l, state: state, version: event_l, pending_events: []}
       end
 
+
       # Receives a single event and is used to mutate the aggregate's internal state.
-      defp update(%@module{uuid: uuid, version: version, pending_events: pending_events, state: state} = aggregate, event) do
+      defp update(%@module{uuid: uuid, counter: counter, version: version, 
+                           pending_events: pending_events, state: state} = aggregate, event) do
         version = version + 1
         state = @module.apply(state, event)
         pending_events = pending_events ++ [event]
+        counter = counter + 1            # called per event, so we +1 event
 
         %@module{aggregate |
+          counter: counter,
           pending_events: pending_events,
           state: state,
           version: version

@@ -1,5 +1,6 @@
 defmodule Engine.Storage.Storage do
   require Logger
+  #@snapshot_period 3
   @storage Engine.Settings.get(:storage)   # can be Eventstore or Postgres
   @moduledoc """
   Proxy API layer to provide a Facade for different data storages. 

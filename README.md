@@ -53,6 +53,14 @@ Engine.Bus.send_command(%{%Account.Command.DepositMoney{} | :id => "jsdf", :amou
 ```
 
 
+### Codestyle
+Use the [laws of
+perception](https://www.verywell.com/gestalt-laws-of-perceptual-organization-2795835)
+if you are also an artist, or follow the
+[credo](https://github.com/rrrene/elixir-style-guide) style.
+
+
+
 ### Eventstore
 Run a [docker](https://github.com/EventStore/eventstore-docker) instance in your machine. If you have mac, ask the sys-admin to start it in a linux server on you LAN or WAN. Access the web gui in http://localhost:2113 . User: admin, pass: changeit
 
