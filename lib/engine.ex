@@ -4,11 +4,10 @@ defmodule Engine do
   # TODO: refactor to have a clean and readble server starting (use maybe from monadex)
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
-  @doc "Start the Obligation supervisor and activate its handlers"
+  @doc "Start the supervisor and activate its handlers"
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
     start_syn()     # SYN --> https://github.com/ostinelli/syn
-    # Cqrs.EventStore.init()
     # Engine.KeyPID.init()  TODO: start syn
 
     # we should start the CQRS before, so the BUS will be ready for use, and aggregates
@@ -18,7 +17,6 @@ defmodule Engine do
     ]
     opts = [strategy: :one_for_one, name: Engine.Supervisor]
     app_response = Supervisor.start_link(children, opts)
-    #Logger.info "Starting obligation domain: #{inspect init_account()}"
 
     # return the main application
     app_response

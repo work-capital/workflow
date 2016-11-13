@@ -30,10 +30,13 @@ your pure functions over them, under the "side effects" dimension.
 
 ### Motivation
 
+As aggregates listen for commands, process managers listen for events (sometimes commands also), and as aggregates emmits events, process managers dispatch commands.
+
 * pure functional data structures for aggregates and process managers
 * one abstraction to implement side-effects
 * multiple data-stores
 * plugable message queue for publishing events
+* one gen_server implementation for aggregates and process managers
 
 ### Develop
 

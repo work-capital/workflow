@@ -1,4 +1,4 @@
-defmodule Engine.Storage.EventStore do
+defmodule Engine.Storage.Eventstore do
   require Logger
   alias Extreme.Messages.ReadEventCompleted
   @event_store     Engine.EventStore
@@ -8,24 +8,18 @@ defmodule Engine.Storage.EventStore do
   Interface with the Extreme EventStore driver to save and read to EVENTSTORE.
   Note that the Engine supervisor starts the driver naming it as 'EventStore'.
   iex> Engine.EventStore.save_event("people",%Obligation.Event.MoneyDeposited{})
+  This Eventstore interface is intelligent when saving snapshots
   """
-
-  @doc "Save only one event to the stream."
-  def append_event(stream, event) do
-    Engine.Messages.write_events(stream, [event])
-      |> send_to_eventstore
-      |> extract_last_event_number
-  end
 
   @doc "Save a list of events to the stream."
   def append_events(stream, events) do
     Engine.Messages.write_events(stream, events)
       |> send_to_eventstore
-      |> extract_last_event_number
+      |> extract_event_numbers
   end
 
   @doc "Load all events for that stream"
-  def load_events(stream) do
+  def load_all_events(stream) do
     Engine.Messages.read_events(stream)
       |> send_to_eventstore
       |> extract_events
@@ -44,8 +38,9 @@ defmodule Engine.Storage.EventStore do
     #IO.inspect "------------------------>>>>> state"
     #IO.inspect state
     case mod(state.event_counter, period) do
-      true  -> {:ok, _} = Engine.Messages.write_events(stream <> @snapshot, [state])
+      true  -> {:ok, [first, last]} = Engine.Messages.write_events(stream <> @snapshot, [state])
                           |> send_to_eventstore
+                          |> extract_event_numbers
       false -> {:ok, :postponed}
     end
   end
@@ -69,8 +64,14 @@ defmodule Engine.Storage.EventStore do
   defp extract_events({:error,_}),        do: {:error, :not_found}
   defp extract_events({:error,_,_}),      do: {:error, :not_found}
 
-  defp extract_last_event_number({:ok, response}),      do: {:ok, response.last_event_number}
-  defp extract_last_event_number({:error, reason}),     do: {:error, reason}
+  # Example of response when writing 4 events from position 5
+  # %Extreme.Messages.WriteEventsCompleted{commit_position: 71391498,
+  # first_event_number: 5, last_event_number: 9, message: nil,
+  # prepare_position: 71391498, result: :Success}
+
+  defp format_response({:ok, reponse}),    do: {:ok, reponse}
+  defp extract_event_numbers({:ok, res}),  do: {:ok, [res.first_event_number, res.last_event_number]}
+  defp extract_event_numbers({:error, reason}), do: {:error, reason}
 
   # rebuild the struct from a string stored in the eventstore
   defp extract_data(message) do
@@ -79,7 +80,7 @@ defmodule Engine.Storage.EventStore do
   end
 
   defp deserialize(data, struct \\ nil),
-    do: Engine.Serializer.decode(data, struct)
+    do: Engine.Storage.Serializer.decode(data, struct)
     #do: :erlang.binary_to_term(data)
     # do: Poison.decode!(data)
 

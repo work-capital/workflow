@@ -1,3 +1,0 @@
-# SupervisedListServer
-
-** TODO: Add description **

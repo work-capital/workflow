@@ -1,4 +1,4 @@
-defmodule Engine.Serializer do
+defmodule Engine.Storage.Serializer do
   @moduledoc """
   It's possible that you want to serialize all your messages to json before sending to the EventStore,
   or you can choose to save as a binary, or hybrid, like, your event data in binary and the whole

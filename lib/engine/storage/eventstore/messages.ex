@@ -29,7 +29,7 @@ defmodule Engine.Messages do
       event_type: to_string(event.__struct__),
       data_content_type: 0,
       metadata_content_type: 0,
-      data: Engine.Serializer.encode(event),
+      data: Engine.Storage.Serializer.encode(event),
       meta: ""
     )
   end
