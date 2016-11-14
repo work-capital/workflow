@@ -1,6 +1,8 @@
 CQRS Eventsourcing Engine
 =========================
 
+[![Join the chat at https://gitter.im/cqrs-engine/Lobby](https://badges.gitter.im/cqrs-engine/Lobby.svg)](https://gitter.im/cqrs-engine/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ### IMPORTANT
 Only the data structures are working, for testing and collecting feedbacks. 
 We believe that at the begining of December 2016, the framework will be usable.
