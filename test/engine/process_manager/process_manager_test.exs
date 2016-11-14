@@ -26,8 +26,9 @@ defmodule Engine.ProcessManager.ProcessManagerTest do
 
   defmodule RegistrationProcess do
     alias RegistrationProcess.Data
-    use Fsm, initial_state: :non_started, data: [], subscriptions: [%OrderPlaced{}, 
-            %ReservationAccepted{}, %ReservationAccepted{}, %PaymentReceived{}]
+    use Fsm,
+      initial_state: :non_started, data: [], subscriptions: [ %OrderPlaced{}, %ReservationAccepted{},
+                     %ReservationAccepted{}, %PaymentReceived{}]
 
     # NON-STARTED
     defstate non_started do

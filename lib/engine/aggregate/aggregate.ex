@@ -26,12 +26,14 @@ defmodule Engine.Aggregate.Aggregate do
       @doc "Create a new aggregate struct from a given aggregate with its previous state"
       def load(%@module{uuid: uuid, snapshot_period: snapshot_period, 
                         counter: counter, state: state}, events) when is_list(events) do
-
         event_l = length(events)
+        IO.inspect "==================---------------------============"
+        IO.inspect state
+        #IO.inspect struct(State)
         counter = counter + event_l    # the position is what was on state + the number of events
-        new_state =
-          Enum.reduce(events, state, &@module.apply(&2, &1))
-          %@module{uuid: uuid, snapshot_period: snapshot_period, 
+        new_state = Enum.reduce(events, state , &@module.apply(&2, &1))
+        #new_state = %@module.State{} |> Map.merge(new_state)
+        %@module{uuid: uuid, snapshot_period: snapshot_period,
                    counter: counter, state: new_state, version: event_l, pending_events: []}
       end
 

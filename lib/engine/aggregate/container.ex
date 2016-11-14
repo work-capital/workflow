@@ -10,20 +10,26 @@ defmodule Engine.Aggregate.Container do
   Easier to test, debug and mantain :) . So we focus only on retrieving and persisting data here,
   creating new pids, and other decisions should be make by the server, repository and router.
 
-  This name: contanier is also a way to fix the trauma, if you come from Enterprise Java Beans,
-  you will love it, specially that it can take some miliseconds to start some millions
-  of them ;)
-
   Note that when we snapshot, we save the server state, that contains the aggregate data structure,
   and we need to replay the remaining events only from the data structure. 
+  The flow should be this: Load a snapshot, if found, replay events from there, 
+    Load snapshot -> found    -> replay from there -> not found, return the snapshot
+                                                      found, replay
+                    not found -> try replay from scratch -> not found -> return a new data strcuture
+                                                        found     -> replay
+  It's optimistic, and try to find a solution. It's specially useful for process managers, that want
+  to make snapshot for each state change (i.e. zero snapshot period), and automatically return the last
+  one, even trying to read the following events.
+  TODO: add ckecksum sync, to guarantee the counter state is the same as returned by the stream
+  TODO: refactor and organize specs, rename bang functions
   """
-
   defstruct uuid: nil,            # uuid, obvious
             module: nil,          # the module name of the aggregate pure functional data structure 
             snapshot_period: nil, # every number of event, we snapshot
             aggregate: nil        # the data structure
 
   require Logger
+  #require Engine.Aggregate.Aggregate.State
   alias Engine.Aggregate.Container
   alias Engine.Storage.Storage
 
@@ -31,17 +37,18 @@ defmodule Engine.Aggregate.Container do
   @type aggregate :: struct()           # the aggregate data structure
   @type container :: struct()           # the server that holds the aggregate data structure
   @type positions :: list(integer)      # positions from first and last saved events, i.e. {:ok, [3,5]}
+  #@type module    :: atom()
   @type events    :: [struct()]
   @type uuid      :: String.t
 
 
 
+  #@spec rehydrate(module, uuid)            :: aggregate
   @spec append_events(aggregate)           :: aggregate
-  @spec append_snapshot(aggregate)         :: {:error, any()} | {:ok, positions}
-  @spec append_events_snapshot(container)  :: {:error, any()} | {:ok, positions}
-  @spec load_all_events(container)         :: {:error, any()} | {:ok, events}
+  @spec append_snapshot(aggregate)         :: aggregate
+  @spec append_events_snapshot(aggregate)  :: aggregate
   @spec load_events(container)             :: {:error, any()} | {:ok, events}
-  @spec load_snapshot(container)           :: {:error, any()} | {:ok, container}
+  #@spec load_snapshot(container)           :: {:error, any()} | {:ok, container}
 
 
   @doc """
@@ -49,30 +56,68 @@ defmodule Engine.Aggregate.Container do
   and if the snapshot is not find, we try to replay from scratch, and if not, 
   we give back the same empty container, once it's suposed to be a new one
   """
-  def rehydrate(%Container{uuid: uuid, module: module, 
-                           snapshot_period: snapshot_period, aggregate: aggregate} = container) do
-    case load_snapshot(container) do
-      {:ok, loaded_container}  -> rebuild_from_snapshot(loaded_container)
-      {:error, reason}         -> load_all_events(container)
+  def rehydrate(module, uuid) do
+    load_snapshot(module, uuid)
+      |> replay_from_snapshot(module)
+  end
+
+
+  @doc """
+  Load the last snapshot for this container, and rebuild state based on module. If we can't load
+  the snapshot for any reason, we return a new fresh datastructure, and in caller function, 
+  events will be played from strach
+  """
+  def load_snapshot(module, uuid) do
+    case Storage.load_snapshot(uuid) do
+      {:ok, snapshot} ->
+        agg = module.new(uuid) # struct State in runtime, but the module is a macro
+        state = agg.state          # so we create a new datastructre to "template" it out
+        new_state = struct_from_map(snapshot.state, as: state)  # our map has keys as strings
+        %{snapshot | state: new_state}                   # so we need a custom converter
+      {:error, reason} ->
+        Logger.error "Loading snapshot failed for #{uuid} because #{reason}"
+        module.new(uuid)
     end
+  end
+
+
+  @doc "rebuild an aggregate from a given snapshot, and replay events if found afterwards"
+  def replay_from_snapshot(aggregate, module) do
+    case Storage.load_events(aggregate.uuid, aggregate.counter) do
+      {:ok, events}    -> module.load(aggregate, events) #aggregate |> module.load(events)
+      {:error, reason} -> replay_from_events(module, aggregate.uuid)
+    end
+  end
+
+  @doc "recostitute a containter from scratch"
+  def replay_from_events(module, uuid, snapshot_period \\ 10) do
+    aggregate = case Storage.load_all_events(uuid) do
+      {:ok, events}    -> module.load(uuid, events)
+      {:error, reason} -> module.new(uuid, snapshot_period)
+    end
+    # events list should only include uncommitted events
+    %{aggregate | pending_events: []}
   end
 
   @doc """
   Main function API for writing, with auto-snapshot, that means, you append the events, and it
   will check inside the container, the event position and the snapshot period, and if it matches,
-  it will automaticall generate a snapshot for this container
+  it will automaticall generate a snapshot for this container. We first must append events and clean
+  the pending events before snapshoting, so we will have a clean snapshot state written on the disk.
+  TODO: sanity check, sync counter with last
   """
   def append_events_snapshot(aggregate) do
-    aggregate
-      |> append_events_snapshot
-      |> append_events
+      aggregate
+        |> append_events                      # append events and also CLEAN the pending ones !
+        |> append_snapshot                    # now we pipe to snapshot
   end
 
   @doc "returns [first, last] positions of the appended events"
   def append_snapshot(aggregate) do
     case Storage.append_snapshot(aggregate.uuid, aggregate,
                                  aggregate.counter, aggregate.snapshot_period) do
-      {:ok, [first, last]} -> aggregate
+      {:ok, [first, last]} -> aggregate       # TODO: sanity check, sync counter with last
+      {:ok, :postponed}    -> aggregate
       {:error, reason}     ->
         Logger.error "Snapshoting aggregate failed for #{aggregate} because #{reason}"
         aggregate
@@ -90,40 +135,31 @@ defmodule Engine.Aggregate.Container do
     end
   end
 
-  @doc "recostitute a containter from scratch"
-  def rebuild_from_events(%Container{uuid: uuid, module: module, 
-                                     snapshot_period: s_period} = container) do
-    case load_all_events(container) do
-      {:ok, events} -> %{container | aggregate: module.new(uuid, s_period) 
-                                                  |> module.load(events)}
-      {:error, _  } -> container
-    end
-  end
 
-  @doc "rebuild a container from a given snapshot, and replay events if found afterwards"
-  def rebuild_from_snapshot(%Container{uuid: uuid, module: module, snapshot_period: s_period, 
-                                       aggregate: aggregate} = container) do
-    position = container.aggregate.counter
-    case load_events(container) do
-      {:ok, events} -> %{container | aggregate: aggregate |> module.load(events)}
-      {:error, _  } -> container
-    end
-  end
-
-
-  @doc "load events from scratch"
-  def load_all_events(%Container{uuid: uuid} = server), do:
-    Storage.load_all_events(uuid)
-
-  @doc "load events from a specific position [extracts position from the aggregate inside]"
+  @doc "load events from a spcecific position [extracts position from the aggregate inside]"
   def load_events(%Container{uuid: uuid, aggregate: aggregate} = server), do:
     Storage.load_events(uuid, aggregate.counter)
 
 
+  @doc "create structs from maps when KEYs are strings...., oi vei"
+  defp struct_from_map(a_map, as: a_struct) do
+    # Find the keys within the map
+    keys = Map.keys(a_struct)
+             |> Enum.filter(fn x -> x != :__struct__ end)
+    # Process map, checking for both string / atom keys
+    processed_map =
+     for key <- keys, into: %{} do
+         value = Map.get(a_map, key) || Map.get(a_map, to_string(key))
+         {key, value}
+       end
+    a_struct = Map.merge(a_struct, processed_map)
+    a_struct
+  end
 
-  @doc "load the last snapshot for this container"
-  def load_snapshot(%Container{uuid: uuid}), do:
-    Storage.load_snapshot(uuid)
+
+end
+
+
 
 
 
@@ -246,4 +282,3 @@ defmodule Engine.Aggregate.Container do
 
 
 
-end

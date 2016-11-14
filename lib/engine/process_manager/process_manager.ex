@@ -29,7 +29,8 @@ defmodule Engine.Fsm do
       def state(%__MODULE__{state: state}), do: state
       def data(%__MODULE__{data: data}), do: data
 
-      defp change_state(%__MODULE__{} = fsm, {:action_responses, responses}), do: parse_action_responses(fsm, responses)
+      defp change_state(%__MODULE__{} = fsm, {:action_responses, responses}), 
+        do: parse_action_responses(fsm, responses)
       defp change_state(%__MODULE__{} = fsm, _), do: fsm
 
       defp parse_action_responses(fsm, responses) do
