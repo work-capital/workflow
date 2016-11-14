@@ -4,13 +4,17 @@ defmodule Engine.Fsm do
   defmacro __using__(opts) do
     quote do
       import Fsm
-      #import Kernel, except: [apply: 2]
 
-      defstruct uuid: nil, state: nil, version: 0, data: [], subscriptions: []
+      defstruct uuid: nil,
+                counter: 0,
+                version: 0,
+                pending: [],
+                snapshot_period: 0,
+                state: nil,
+                data: [],                 # until here was equal aggregate
+                subscriptions: []
 
-      defmodule Data do
-        defstruct unquote(opts[:data])
-      end
+      defmodule Data, do: defstruct unquote(opts[:data])
 
       @declaring_state nil
       @declared_events HashSet.new
@@ -101,15 +105,6 @@ defmodule Engine.Fsm do
     decl_event(event, true)
   end
 
-  # commands
-  defmacro defcommand(event) do
-    decl_event(event, false)
-  end
-
-  defmacro defcommandp(event) do
-    decl_event(event, true)
-  end
-
   defp decl_event(event, private) do
     quote do
       {event_name, arity} = case unquote(Macro.escape(event, unquote: nil)) do
@@ -142,24 +137,6 @@ defmodule Engine.Fsm do
   end
 
   defmacro defeventp(event, opts, do: event_def) do
-    do_defevent(event, [{:private, true} | opts], event_def)
-  end
-
-
-  # commands [behave like events...]
-  defmacro defcommand(event, opts) do
-    do_defevent(event, opts, opts[:do])
-  end
-
-  defmacro defcommand(event, opts, do: event_def) do
-    do_defevent(event, opts, event_def)
-  end
-
-  defmacro defcommandp(event, opts) do
-    do_defevent(event, [{:private, true} | opts], opts[:do])
-  end
-
-  defmacro defcommandp(event, opts, do: event_def) do
     do_defevent(event, [{:private, true} | opts], event_def)
   end
 

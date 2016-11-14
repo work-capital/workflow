@@ -94,14 +94,13 @@ defmodule Engine.ProcessManager.ProcessManagerTest do
 
 
 
-
-
   test "response actions" do
     {response, fsm} = RegistrationProcess.new("13323")
-    |> RegistrationProcess.handle(%OrderPlaced{id: "res-0334"})
-    fsm = fsm |> RegistrationProcess.handle(%ReservationRejected{})
+      |> RegistrationProcess.handle(%OrderPlaced{id: "res-0334"})
+      fsm = fsm |> RegistrationProcess.handle(%ReservationRejected{})
 
 
+      #IO.inspect fsm
     # IO.inspect "---------------->"
     # IO.inspect fsm
     # IO.inspect response
