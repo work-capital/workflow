@@ -87,13 +87,9 @@ If something sends a command, it entails expectation that it will be fulfilled. 
 
 Events, on the other hand, are informative in nature, and it's reasonable to expect zero, two, or more components to be interested in a particular event. We don't really care in the scope of making the requested change. 
 
-**Example** 
-
-This could be compared to real life. If you have three children, walk into a room and simply shout "Clean the bathroom," you have no guarantee that someone will, and perhaphs if it won't be done twice (if you have obedient children that is ;-) You should fare better if you assign a specific child to do what you want done. 
-
-When that child finishes its job however, it's convenient if it shouts out "bathroom has been cleaned," so that everyone who wants to brush their teeth knows they can now do so. 
 
 
 
+#### References
 
 

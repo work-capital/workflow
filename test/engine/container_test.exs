@@ -1,6 +1,6 @@
-defmodule Engine.Aggregate.ContainerTest do
+defmodule Engine.ContainerTest do
   use ExUnit.Case
-  alias Engine.Aggregate.Container
+  alias Engine.Container
   #doctest EventSourced.Aggregate
 
   defmodule ExampleAggregate do
@@ -35,11 +35,11 @@ defmodule Engine.Aggregate.ContainerTest do
       |> ExampleAggregate.assign_tel("66634234")
 
     res = Container.append_events(aggregate)
-    tes = %Engine.Aggregate.ContainerTest.ExampleAggregate{
+    tes = %Engine.ContainerTest.ExampleAggregate{
             counter: 2,
             pending_events: [],
             snapshot_period: 10,
-            state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Ben", tel: "66634234"},
+            state: %Engine.ContainerTest.ExampleAggregate.State{name: "Ben", tel: "66634234"},
             uuid: uuid,
             version: 2}
     assert res == tes
@@ -52,11 +52,11 @@ defmodule Engine.Aggregate.ContainerTest do
       |> ExampleAggregate.assign_tel("66634234")
 
     res = Container.append_snapshot(aggregate)
-    tes = %Engine.Aggregate.ContainerTest.ExampleAggregate{counter: 2, pending_events:
-             [%Engine.Aggregate.ContainerTest.ExampleAggregate.Events.NameAssigned{name: "Ben"},
-              %Engine.Aggregate.ContainerTest.ExampleAggregate.Events.TelAssigned{tel: "66634234"}],
+    tes = %Engine.ContainerTest.ExampleAggregate{counter: 2, pending_events:
+             [%Engine.ContainerTest.ExampleAggregate.Events.NameAssigned{name: "Ben"},
+              %Engine.ContainerTest.ExampleAggregate.Events.TelAssigned{tel: "66634234"}],
            snapshot_period: 10,
-           state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Ben", tel: "66634234"}, 
+           state: %Engine.ContainerTest.ExampleAggregate.State{name: "Ben", tel: "66634234"}, 
            uuid: uuid,
            version: 2}
     assert res == tes
@@ -66,22 +66,22 @@ defmodule Engine.Aggregate.ContainerTest do
     uuid = "aggregate-003-" <> UUID.uuid4
     aggregate = ExampleAggregate.new(uuid, 2)
       |> ExampleAggregate.assign_name("Ben")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_tel("1")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_name("Bon")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_tel("2")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_name("Bin")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_tel("3")
-      |> Container.append_events_snapshot
+      |> Container.persist
 
-    tes = %Engine.Aggregate.ContainerTest.ExampleAggregate{counter: 6, 
+    tes = %Engine.ContainerTest.ExampleAggregate{counter: 6, 
              pending_events: [],
              snapshot_period: 2,
-             state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Bin", tel: "3"}, 
+             state: %Engine.ContainerTest.ExampleAggregate.State{name: "Bin", tel: "3"}, 
              uuid: uuid,
              version: 6}
     assert aggregate == tes
@@ -92,19 +92,19 @@ defmodule Engine.Aggregate.ContainerTest do
     uuid = "aggregate-005-" <> UUID.uuid4
     aggregate = ExampleAggregate.new(uuid, 2)
       |> ExampleAggregate.assign_name("Ben")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_tel("1")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_name("Bon")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_tel("2")
-      |> Container.append_events_snapshot
+      |> Container.persist
 
       aggregate2 = Container.replay_from_events(ExampleAggregate, uuid, 2)
       #IO.inspect aggregate2
-      tes = %Engine.Aggregate.ContainerTest.ExampleAggregate{counter: 4, pending_events: [],
+      tes = %Engine.ContainerTest.ExampleAggregate{counter: 4, pending_events: [],
               snapshot_period: 40,
-              state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Bon", tel: "2"},
+              state: %Engine.ContainerTest.ExampleAggregate.State{name: "Bon", tel: "2"},
               uuid: uuid,
               version: 4}
       assert aggregate2 == tes
@@ -113,55 +113,54 @@ defmodule Engine.Aggregate.ContainerTest do
   test "rebuild from snapshot, replaying events from the last counter position" do
     uuid = "aggregate-006-" <> UUID.uuid4
     aggregate = ExampleAggregate.new(uuid, 3)
-      |> ExampleAggregate.assign_name("Ben")
-      |> Container.append_events_snapshot
+      |> ExampleAggregate.assign_name("Ben")      #-----> start saving from here
+      |> Container.persist
       |> ExampleAggregate.assign_tel("1")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_name("Bon")
-      |> Container.append_events_snapshot
+      |> Container.persist                        #-----> after 3, snapshot here
       |> ExampleAggregate.assign_tel("2")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_name("Den")
-      |> Container.append_events_snapshot
+      |> Container.persist
       |> ExampleAggregate.assign_tel("3")         # ----> last snapshot here !!!
-      |> Container.append_events_snapshot
-      |> ExampleAggregate.assign_name("Don")
-      |> Container.append_events_snapshot
+      |> Container.persist
+      |> ExampleAggregate.assign_name("Don")      # ----> replay events from here
+      |> Container.persist
       |> ExampleAggregate.assign_tel("4")
-      |> Container.append_events_snapshot
-
+      |> Container.persist
 
 
       #### PIPELINE RESULT
-      last = %Engine.Aggregate.ContainerTest.ExampleAggregate{counter: 8, pending_events: [],
+      last = %Engine.ContainerTest.ExampleAggregate{counter: 8, pending_events: [],
           snapshot_period: 3,
-          state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Don",tel: "4"},
+          state: %Engine.ContainerTest.ExampleAggregate.State{name: "Don",tel: "4"},
           uuid: uuid, version: 8}
       assert aggregate == last
       # IO.inspect aggregate
 
       #### LOAD SNAPSHOT
       snapshot = Container.load_snapshot(ExampleAggregate, uuid)   # state: 
-      snap_res = %Engine.Aggregate.ContainerTest.ExampleAggregate{counter: 6, pending_events: [],
+      snap_res = %Engine.ContainerTest.ExampleAggregate{counter: 6, pending_events: [],
           snapshot_period: 3,
-          state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Den", tel: "3"},
+          state: %Engine.ContainerTest.ExampleAggregate.State{name: "Den", tel: "3"},
           uuid: uuid,version: 6}
       assert snapshot = snap_res
       # IO.inspect snapshot
 
       #### REPLAY FROM SNAPSHOT
-      rebuilt     = Container.replay_from_snapshot(snapshot, ExampleAggregate)
-      rebuilt_res = %Engine.Aggregate.ContainerTest.ExampleAggregate{counter: 8, pending_events: [],
+      rebuilt     = Container.replay_events(snapshot, ExampleAggregate)
+      rebuilt_res = %Engine.ContainerTest.ExampleAggregate{counter: 8, pending_events: [],
         snapshot_period: 3, 
-        state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Don", tel: "4"},
+        state: %Engine.ContainerTest.ExampleAggregate.State{name: "Don", tel: "4"},
         uuid: uuid, version: 2}
       assert rebuilt = rebuilt_res
       # IO.inspect rebuilt
 
       rehydrate     = Container.rehydrate(ExampleAggregate, uuid)
-      rehydrate_res = %Engine.Aggregate.ContainerTest.ExampleAggregate{counter: 8, pending_events: [],
+      rehydrate_res = %Engine.ContainerTest.ExampleAggregate{counter: 8, pending_events: [],
         snapshot_period: 3,
-        state: %Engine.Aggregate.ContainerTest.ExampleAggregate.State{name: "Don", tel: "4"},
+        state: %Engine.ContainerTest.ExampleAggregate.State{name: "Don", tel: "4"},
         uuid: uuid, version: 2}
       assert rehydrate = rehydrate_res
       #IO.inspect rehydrate
@@ -181,8 +180,8 @@ defmodule Engine.Aggregate.ContainerTest do
   #
 
   def write(aggregate, uuid), do:
-    %Container{uuid: uuid, module: ExampleAggregate, aggregate: aggregate}
-      |> Container.append_events_snapshot
+    %Container{uuid: uuid, module: ExampleAggregate, state: aggregate}
+      |> Container.persist
 
 end
 

@@ -1,69 +1,49 @@
 defmodule Engine.Aggregate.Server do
+  @module __MODULE__
   @moduledoc """
-  Container for aggregates,
+  Container for aggregates. For the sake of non-ambiguity, we use the name 'container' for the state of 
+  this gen_server, and 'state' for the data structure. 
+  GENSERVER  ->  CONTAINER  -> STATE (Aggregate or Process Manager Data Structure Macros)
   Allows execution of commands against an aggregate and handles persistence of events to the 
   event store.
-  https://pdincau.wordpress.com/2013/04/17/how-to-handle-configuration-in-init1-function-without-slowing-down-your-erlang-supervisor-startup/
   """
   use GenServer
   require Logger
 
-  alias Engine.Aggregate.Container
+  alias Engine.Container          # this is the internal state
   alias Commanded.Event.Mapper
 
-  ### API
+  ### API ##############
+
+  @doc "Start, suitable for aggregates"
   def start_link(module, uuid), do:
-    GenServer.start_link(__MODULE__, %Container{ module: module, uuid: uuid })
+    GenServer.start_link(@module, %Container{ module: module, uuid: uuid })
 
-  def execute(server, command, handler), do:
-    GenServer.call(server, {:execute_command, command, handler})
+  @doc "Execute command over an aggregate or processmanager"
+  def execute(pid, command, handler), do:
+    GenServer.call(pid, {:execute_command, command, handler})
 
-  def state(server), do:
-    GenServer.call(server, {:aggregate})
+  @doc "Get the state of this genserver"
+  def get_container(pid), do:
+    GenServer.call(pid, {:get_container})
 
-  ### CALLBACKS
-  def init(%Container{} = state) do
-    GenServer.cast(self, {:load_events})
-    {:ok, state}
+
+  ### CALLBACKS #########
+
+  def init(%Container{} = container) do
+    GenServer.cast(self, {:rehydrate})
+    {:ok, container}
   end
 
-  def handle_cast({:load_events}, %Container{} = state) do
-    state = load_events(state)
-    {:noreply, state}
-  end
+  def handle_cast({:rehydrate}, %Container{module: module, uuid: uuid} = container), do:
+    {:noreply, Container.rehydrate(container)}
+
+  def handle_call({:get_container}, _from, %Container{state: state} = container), do:
+    {:reply, container, container}
 
   def handle_call({:execute_command, command, handler}, _from, %Container{} = state) do
     {reply, state} = execute_command(command, handler, state)
     {:reply, reply, state}
-  end
-
-  def handle_call({:aggregate}, _from, %Container{aggregate: aggregate} = state) do
-    {:reply, aggregate, state}
-  end
-
-  ### PRIVATES
-  defp load_events(%Container{module: module, uuid: uuid} = state) do
-    aggregate = case EventStore.read_stream_forward(uuid) do
-      {:ok, events} -> module.load(uuid, map_from_recorded_events(events))
-      {:error, :stream_not_found} -> module.new(uuid)
-    end
-
-    # clean event list
-    aggregate = %{aggregate | pending_events: []}
-    %Container{aggregate | aggregate: aggregate}
-  end
-
-  defp execute_command(command, handler, %Container{aggregate: %{version: version} = aggregate} = state) do
-    expected_version = version
-
-    with {:ok, aggregate} <- handle_command(handler, aggregate, command),
-         {:ok, aggregate} <- persist_events(aggregate, expected_version)
-      do {:ok, %Container{aggregate | aggregate: aggregate}}
-    else
-      {:error, reason} = reply ->
-        Logger.warn(fn -> "failed to execute command due to: #{inspect reason}" end)
-        {reply, state}
-    end
   end
 
   defp handle_command(handler, state, command) do
@@ -74,20 +54,19 @@ defmodule Engine.Aggregate.Server do
     end
   end
 
-  # no pending events to persist, do nothing
-  defp persist_events(%{pending_events: []} = state, _expected_version), do: {:ok, state}
-
-  defp persist_events(%{uuid: uuid, pending_events: pending_events} = state, expected_version) do
-    correlation_id = UUID.uuid4
-    event_data = Mapper.map_to_event_data(pending_events, correlation_id)
-
-    :ok = EventStore.append_to_stream(uuid, expected_version, event_data)
-
-    # clear pending events after appending to stream
-    {:ok, %{state | pending_events: []}}
+  ### INTERNALS #######
+  #
+  defp execute_command(command, handler, %Container{state: %{version: version} = aggregate} = container) do
+    # expected_version = version
+    #
+    # with {:ok, aggregate} <- handle_command(handler, aggregate, command),
+    #      {:ok, aggregate} <- persist_events(aggregate, expected_version)
+    #   do {:ok, %Container{container | state: state}}
+    # else
+    #   {:error, reason} = reply ->
+    #     Logger.warn(fn -> "failed to execute command due to: #{inspect reason}" end)
+    #     {reply, container}
+    # end
   end
 
-  defp map_from_recorded_events(recorded_events) when is_list(recorded_events) do
-    Mapper.map_from_recorded_events(recorded_events)
-  end
 end

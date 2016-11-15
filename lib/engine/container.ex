@@ -1,4 +1,4 @@
-defmodule Engine.Aggregate.Container do
+defmodule Engine.Container do
   @moduledoc """
   The triangle: Aggregate Data Structure + Server's State (Container) + Side Effects
   This module encapsulates the Database side-efects over the aggregate's container. 
@@ -9,6 +9,9 @@ defmodule Engine.Aggregate.Container do
   function will be the interface for this small sub-engine.
   Easier to test, debug and mantain :) . So we focus only on retrieving and persisting data here,
   creating new pids, and other decisions should be make by the server, repository and router.
+  If you come from OO, imagine that this module is like: 
+  https://en.wikipedia.org/wiki/Java_Persistence_Query_Language, but differently, we receive the 
+  data-structure, process side-effects, and give back the updated data-structure
 
   Note that when we snapshot, we save the server state, that contains the aggregate data structure,
   and we need to replay the remaining events only from the data structure. 
@@ -23,18 +26,24 @@ defmodule Engine.Aggregate.Container do
   TODO: add ckecksum sync, to guarantee the counter state is the same as returned by the stream
   TODO: refactor and organize specs, rename bang functions
   """
-  defstruct uuid: nil,            # uuid, obvious
-            module: nil,          # the module name of the aggregate pure functional data structure 
-            snapshot_period: nil, # every number of event, we snapshot
-            aggregate: nil        # the data structure
+
+
+  defstruct uuid: nil,                  # uuid, obvious
+            name: nil,                  # use it to concatenate to the UUID and give a meaningful name
+            module: nil,                # the module name of the aggregate pure functional data structure 
+            snapshot_period: nil,       # every number of event, we snapshot
+            state: nil,                 # the data structure  process_manager | state
+            dispatcher: nil,            # used specifically by the process manager
+            last_seen_event_id: nil     # used specifically by the process manager
+
 
   require Logger
   #require Engine.Aggregate.Aggregate.State
-  alias Engine.Aggregate.Container
+  alias Engine.Container
   alias Engine.Storage.Storage
 
   @typedoc "positions -> [first, last]"
-  @type aggregate :: struct()           # the aggregate data structure
+  @type state     :: struct()           # the aggregate or process manager data structure
   @type container :: struct()           # the server that holds the aggregate data structure
   @type positions :: list(integer)      # positions from first and last saved events, i.e. {:ok, [3,5]}
   #@type module    :: atom()
@@ -44,22 +53,52 @@ defmodule Engine.Aggregate.Container do
 
 
   #@spec rehydrate(module, uuid)            :: aggregate
-  @spec append_events(aggregate)           :: aggregate
-  @spec append_snapshot(aggregate)         :: aggregate
-  @spec append_events_snapshot(aggregate)  :: aggregate
+  @spec rehydrate(module, uuid)            :: state
+  @spec append_events(state)               :: state
+  @spec append_snapshot(state)             :: state
+  @spec persist(state)      :: state
   @spec load_events(container)             :: {:error, any()} | {:ok, events}
-  #@spec load_snapshot(container)           :: {:error, any()} | {:ok, container}
+  #@spec load_snapshot(container)          :: {:error, any()} | {:ok, container}
 
-
+  #### API #########
   @doc """
   If we find a snapshot for this stream, we replay from that state position, 
   and if the snapshot is not find, we try to replay from scratch, and if not, 
   we give back the same empty container, once it's suposed to be a new one
   """
+  def rehydrate(%Container{module: module, uuid: uuid} = container) do
+    new_state = rehydrate(module, uuid)
+    %{container | state: new_state}
+  end
+
+  @doc """
+  Main function API for writing, with auto-snapshot, that means, you append the events, and it
+  will check inside the container, the event position and the snapshot period, and if it matches,
+  it will automaticall generate a snapshot for this container. We first must append events and clean
+  the pending events before snapshoting, so we will have a clean snapshot state written on the disk.
+  TODO: sanity check, sync counter with last
+  """
+  def persist(%Container{state: state} = container) do
+    new_state = persist(state)
+    %{container | state: new_state}
+  end
+
+
+  ##### INTERNAL #####
+ 
+  @doc "Main facade functions for testing with aggregates and process managers data structures"
   def rehydrate(module, uuid) do
     load_snapshot(module, uuid)
-      |> replay_from_snapshot(module)
+      |> replay_events(module)
   end
+
+  @doc "Main facade functions for testing with aggregates and process managers data structures"
+  def persist(aggregate) do
+      aggregate
+        |> append_events                      # append events and also CLEAN the pending ones !
+        |> append_snapshot                    # now we pipe to snapshot
+  end
+
 
 
   @doc """
@@ -82,7 +121,7 @@ defmodule Engine.Aggregate.Container do
 
 
   @doc "rebuild an aggregate from a given snapshot, and replay events if found afterwards"
-  def replay_from_snapshot(aggregate, module) do
+  def replay_events(aggregate, module) do
     case Storage.load_events(aggregate.uuid, aggregate.counter) do
       {:ok, events}    -> module.load(aggregate, events) #aggregate |> module.load(events)
       {:error, reason} -> replay_from_events(module, aggregate.uuid)
@@ -99,17 +138,16 @@ defmodule Engine.Aggregate.Container do
     %{aggregate | pending_events: []}
   end
 
-  @doc """
-  Main function API for writing, with auto-snapshot, that means, you append the events, and it
-  will check inside the container, the event position and the snapshot period, and if it matches,
-  it will automaticall generate a snapshot for this container. We first must append events and clean
-  the pending events before snapshoting, so we will have a clean snapshot state written on the disk.
-  TODO: sanity check, sync counter with last
-  """
-  def append_events_snapshot(aggregate) do
-      aggregate
-        |> append_events                      # append events and also CLEAN the pending ones !
-        |> append_snapshot                    # now we pipe to snapshot
+
+
+  @doc "append events to the stream, reset pending events and update counter"
+  def append_events(aggregate) do
+    case Storage.append_events(aggregate.uuid, aggregate.pending_events) do
+      {:ok, [first, last]} -> %{aggregate | pending_events: []}
+      {:error, reason}     ->
+        Logger.error "Appending events failed for #{aggregate} because #{reason}"
+        aggregate
+    end
   end
 
   @doc "returns [first, last] positions of the appended events"
@@ -124,20 +162,8 @@ defmodule Engine.Aggregate.Container do
     end
   end
 
-
-  @doc "append events to the stream, reset pending events and update counter"
-  def append_events(aggregate) do
-    case Storage.append_events(aggregate.uuid, aggregate.pending_events) do
-      {:ok, [first, last]} -> %{aggregate | pending_events: []}
-      {:error, reason}     ->
-        Logger.error "Appending events failed for #{aggregate} because #{reason}"
-        aggregate
-    end
-  end
-
-
   @doc "load events from a spcecific position [extracts position from the aggregate inside]"
-  def load_events(%Container{uuid: uuid, aggregate: aggregate} = server), do:
+  def load_events(%Container{uuid: uuid, state: aggregate} = server), do:
     Storage.load_events(uuid, aggregate.counter)
 
 
@@ -156,6 +182,17 @@ defmodule Engine.Aggregate.Container do
     a_struct
   end
 
+  @doc "C = counter, P = position, it returns true if the counter beats the position"
+  defp mod(0,p),             do: true    # we snapshot the state from the first event
+  defp mod(c,p) when c  < p, do: false
+  defp mod(c,p) when c >= p  do
+    case rem c,p do
+      0 -> true
+      _ -> false
+    end
+  end
+
+  defp concatenate(persistence), do: "#{name}-#{uuid}"
 
 end
 
@@ -252,7 +289,7 @@ end
   #     {:error, _} ->
   #       replay_from_begining(id, aggregate, supervisor)
   #     {:ok, snapshot} ->
-  #       replay_from_snapshot(id, aggregate, supervisor, snapshot)
+  #       replay_events(id, aggregate, supervisor, snapshot)
   #   end
   # end
   #
@@ -267,7 +304,7 @@ end
   #   end
   # end
   #
-  # defp replay_from_snapshot(id, aggregate, supervisor, snapshot) do
+  # defp replay_events(id, aggregate, supervisor, snapshot) do
   #   IO.inspect "replaying from snapshot"
   #   position = snapshot.event_counter + 1   # ajust to next event from that snapshot
   #   case EventStore.load_events(id, position) do
