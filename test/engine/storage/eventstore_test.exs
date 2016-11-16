@@ -41,38 +41,41 @@ defmodule Engine.Storage.EventstoreTest do
   end
 
 
-  test "snapshot writing period, should be every 3 snapshots" do
-    snapshot_period = 3
-    id   = "test-4-" <> UUID.uuid4
-    {:ok, res1 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", counter: 1}, 1,snapshot_period)
-    {:ok, res2 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", counter: 3}, 3, snapshot_period)
-    {:ok, res3 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", counter: 27}, 27,snapshot_period)
-    {:ok, res4 } = Storage.append_snapshot(id,
-                       %MyState{state: "hi", counter: 31}, 31, snapshot_period)
-    #Logger.debug "Snapshot: #{inspect res3}"
-    assert res1 == :postponed
-    assert res2 != :postponed
-    assert res3 != :postponed
-    assert res4 == :postponed
-  end
+  # TODO: transfer this test to container tests
+  # test "snapshot writing period, should be every 3 snapshots" do
+  #   snapshot_period = 3
+  #   id   = "test-4-" <> UUID.uuid4
+  #   {:ok, res1 } = Storage.append_snapshot(id,
+  #                      %MyState{state: "hi", counter: 1}, 1,snapshot_period)
+  #   {:ok, res2 } = Storage.append_snapshot(id,
+  #                      %MyState{state: "hi", counter: 3}, 3, snapshot_period)
+  #   {:ok, res3 } = Storage.append_snapshot(id,
+  #                      %MyState{state: "hi", counter: 27}, 27,snapshot_period)
+  #   {:ok, res4 } = Storage.append_snapshot(id,
+  #                      %MyState{state: "hi", counter: 31}, 31, snapshot_period)
+  #   #Logger.debug "Snapshot: #{inspect res3}"
+  #   assert res1 == :postponed
+  #   assert res2 != :postponed
+  #   assert res3 != :postponed
+  #   assert res4 == :postponed
+  # end
 
 
-  test "test writing and reading several snapshots, and reading the last one" do
-    # in 26 events, check if only 8 were written, once we jump every 3. The last should be 24
-    snapshot_period = 3
-    id   = "test-5-" <> UUID.uuid4
-    for n <- 1..26, do:
-      Storage.append_snapshot(id,
-                       %MyState{state: "good shape", counter: n},
-                       n,
-                       snapshot_period)
 
-    {:ok, res}   = Storage.load_snapshot(id)
-    assert res  == %MyState{state: "good shape", counter: 24}
-  end
+  # TODO: transfer this test to container tests
+  # test "test writing and reading several snapshots, and reading the last one" do
+  #   # in 26 events, check if only 8 were written, once we jump every 3. The last should be 24
+  #   snapshot_period = 3
+  #   id   = "test-5-" <> UUID.uuid4
+  #   for n <- 1..26, do:
+  #     Storage.append_snapshot(id,
+  #                      %MyState{state: "good shape", counter: n},
+  #                      n,
+  #                      snapshot_period)
+  #
+  #   {:ok, res}   = Storage.load_snapshot(id)
+  #   assert res  == %MyState{state: "good shape", counter: 24}
+  # end
 
   test "write and try to read a non existing snapshot" do
     id   = "non-existent-in-database" <> UUID.uuid4

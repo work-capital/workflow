@@ -166,6 +166,17 @@ defmodule Engine.ContainerTest do
       #IO.inspect rehydrate
   end
 
+  test "snapshot loading not found, so we get a new fresh data structure and replay all events" do
+    uuid = UUID.uuid4
+    aggregate = ExampleAggregate.new(uuid, 3)
+      |> ExampleAggregate.assign_name("Ben")
+
+    res = Container.rehydrate(ExampleAggregate, uuid)
+    assert res == ExampleAggregate.new(uuid, 10)      # 10 is the default snapshot period !
+    # IO.inspect "********************"
+    # IO.inspect res
+  end
+
   #TODO: rebuild from events causing error, and starting from zero
   # test "append events from container" do
   #   uuid = "container-002-" <> UUID.uuid4

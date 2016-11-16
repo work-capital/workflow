@@ -33,16 +33,11 @@ defmodule Engine.Storage.Eventstore do
   end
 
 
-  @doc "auto snapshot after checking the frequency config, adding -snapshot to its namespace"
-  def append_snapshot(stream, state, counter, period) do
-    # IO.inspect "------------------------>>>>> state"
-    # IO.inspect counter
-    case mod(counter, period) do
-      true  -> {:ok, [first, last]} = Engine.Messages.write_events(stream <> @snapshot, [state])
-                          |> send_to_eventstore
-                          |> extract_event_numbers
-      false -> {:ok, :postponed}
-    end
+  @doc "snapshot adding -snapshot to its stream name"
+  def append_snapshot(stream, state) do
+    Engine.Messages.write_events(stream <> @snapshot, [state])
+      |> send_to_eventstore
+      |> extract_event_numbers
   end
 
   @doc "Load the last snapshot for that stream"

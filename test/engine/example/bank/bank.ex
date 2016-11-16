@@ -1,19 +1,7 @@
-defmodule Engine.ExampleDomain.MoneyTransfer do
+defmodule Engine.Example.MoneyTransfer do
   use Aggregate, fields: [transfer_uuid: nil, source_account: nil, target_account: nil, amount: 0, reversed?: false]
+  alias Engine.Example.MoneyTransfer
 
-  alias Engine.ExampleDomain.MoneyTransfer
-
-  ### COMMANDS
-  defmodule Commands do
-    defmodule TransferMoney, do: defstruct transfer_uuid: UUID.uuid4, source_account: nil, target_account: nil, amount: nil
-  end
-
-  ### EVENTS
-  defmodule Events do
-    defmodule MoneyTransferRequested, do: defstruct transfer_uuid: nil, source_account: nil, target_account: nil, amount: nil
-    defmodule MoneyTransferSucceeded, do: defstruct transfer_uuid: nil, source_account: nil, target_account: nil, amount: nil
-    defmodule MoneyTransferFailed,    do: defstruct transfer_uuid: nil, source_account: nil, target_account: nil, amount: nil
-  end
 
   ### ALIASES
   alias Commands.{TransferMoney}

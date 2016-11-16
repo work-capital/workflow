@@ -109,12 +109,12 @@ defmodule Engine.Container do
   def load_snapshot(module, uuid) do
     case Storage.load_snapshot(uuid) do
       {:ok, snapshot} ->
-        agg = module.new(uuid) # struct State in runtime, but the module is a macro
-        state = agg.state          # so we create a new datastructre to "template" it out
+        agg = module.new(uuid)                           # struct State in runtime, but the module is a macro
+        state = agg.state                                # so we create a new datastructre to "template" it out
         new_state = struct_from_map(snapshot.state, as: state)  # our map has keys as strings
         %{snapshot | state: new_state}                   # so we need a custom converter
       {:error, reason} ->
-        Logger.error "Loading snapshot failed for #{uuid} because #{reason}"
+        Logger.error "Snapshot unloaded for #{uuid} because #{reason}, so creating a fresh data structure"
         module.new(uuid)
     end
   end
@@ -134,10 +134,8 @@ defmodule Engine.Container do
       {:ok, events}    -> module.load(uuid, events)
       {:error, reason} -> module.new(uuid, snapshot_period)
     end
-    # events list should only include uncommitted events
-    %{aggregate | pending_events: []}
+    %{aggregate | pending_events: []}                    # events list should only include uncommitted events
   end
-
 
 
   @doc "append events to the stream, reset pending events and update counter"
@@ -150,15 +148,16 @@ defmodule Engine.Container do
     end
   end
 
-  @doc "returns [first, last] positions of the appended events"
+  @doc "automatically decide if it's the right time to snapshot based on the snapshot period"
   def append_snapshot(aggregate) do
-    case Storage.append_snapshot(aggregate.uuid, aggregate,
-                                 aggregate.counter, aggregate.snapshot_period) do
-      {:ok, [first, last]} -> aggregate       # TODO: sanity check, sync counter with last
-      {:ok, :postponed}    -> aggregate
-      {:error, reason}     ->
-        Logger.error "Snapshoting aggregate failed for #{aggregate} because #{reason}"
-        aggregate
+    case mod(aggregate.counter, aggregate.snapshot_period) do
+      true  -> case Storage.append_snapshot(aggregate.uuid, aggregate) do
+                  {:ok, [first, last]} -> aggregate
+                  {:error, reason}     ->
+                    Logger.error "Snapshoting aggregate failed for #{aggregate} because #{reason}"
+                    aggregate
+               end
+      false -> aggregate
     end
   end
 

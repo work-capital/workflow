@@ -1,26 +1,12 @@
-defmodule Engine.ExampleDomain.Account do
+defmodule Engine.Example.Account do
   use Engine.Aggregate, fields: [account_number: nil, balance: 0, is_active?: false]
-  alias Engine.ExampleDomain.Account
+  alias Engine.Example.Account
 
-  ### COMMANDS
-  defmodule Commands do
-    defmodule OpenAccount,     do: defstruct [:account_number, :initial_balance]
-    defmodule DepositMoney,    do: defstruct [:account_number, :transfer_uuid, :amount, :source]
-    defmodule WithdrawMoney,   do: defstruct [:account_number, :transfer_uuid, :amount, :target]
-    defmodule CloseAccount,    do: defstruct [:account_number]
-  end
 
-  ### EVENTS
-  defmodule Events do
-    defmodule AccountOpened,   do: defstruct [:account_number, :initial_balance]
-    defmodule MoneyDeposited,  do: defstruct [:account_number, :transfer_uuid, :amount, :balance, :source]
-    defmodule MoneyWithdrawn,  do: defstruct [:account_number, :transfer_uuid, :amount, :balance, :target]
-    defmodule AccountClosed,   do: defstruct [:account_number]
-  end
 
   ### ALIASES
-  alias Commands.{OpenAccount,DepositMoney,WithdrawMoney,CloseAccount}
-  alias Events.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountClosed}
+  alias Engine.Example.Account.Commands.{OpenAccount,DepositMoney,WithdrawMoney,CloseAccount}
+  alias Engine.Example.Account.Event.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountClosed}
 
   ### API
   def open_account(%Account{state: %{is_active?: true}}, %OpenAccount{}), do: {:error, :account_already_open}

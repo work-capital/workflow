@@ -87,7 +87,14 @@ If something sends a command, it entails expectation that it will be fulfilled. 
 
 Events, on the other hand, are informative in nature, and it's reasonable to expect zero, two, or more components to be interested in a particular event. We don't really care in the scope of making the requested change. 
 
+### Infra-structure Sequence Diagrams
+Use [web sequence diagrams](https://www.websequencediagrams.com/) to plot it.
 
+title CQRS Eventsourcing 
+
+UI -> REST: Send Command
+REST -> Command Bus: Dispatch Command
+Command Bus -> Repository: Open Aggregate
 
 
 #### References

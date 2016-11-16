@@ -1,5 +1,5 @@
-defmodule Engine.ExampleDomain.AccountBalanceHandler do
-  alias Engine.ExampleDomain.BankAccount.Events.{BankAccountOpened,MoneyDeposited}
+defmodule Engine.Example.AccountBalanceHandler do
+  alias Engine.Example.Account.Events.{BankAccountOpened,MoneyDeposited}
 
   @behaviour Engine.Event.Handler
 
@@ -7,7 +7,7 @@ defmodule Engine.ExampleDomain.AccountBalanceHandler do
     Agent.start_link(fn -> 0 end, name: __MODULE__)
   end
 
-  def handle(%BankAccountOpened{initial_balance: initial_balance}, _metadata) do
+  def handle(%AccountOpened{initial_balance: initial_balance}, _metadata) do
     Agent.update(__MODULE__, fn _ -> initial_balance end)
   end
 
