@@ -3,7 +3,6 @@ defmodule Engine.Example.Account do
   alias Engine.Example.Account
 
 
-
   ### ALIASES
   alias Engine.Example.Account.Commands.{OpenAccount,DepositMoney,WithdrawMoney,CloseAccount}
   alias Engine.Example.Account.Event.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountClosed}

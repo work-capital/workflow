@@ -10,13 +10,17 @@ defmodule Engine.Aggregate.ServerTest do
   ### HANDLERS
 
   ### AGGREGATES
+  alias Engine.Example.Account
 
   ### REPOSITORY
   alias Engine.Repository
 
   test "execute command against an aggregate" do
     account_number = UUID.uuid4
+    account = Engine.Example.Account.new(account_number)
 
+    res = Engine.Repository.open_aggregate(account, account_number)
+    #IO.inspect res
     #{:ok, aggregate} = Registry.open_aggregate(BankAccount, account_number)
 
     # :ok = Aggregate.execute(aggregate, %OpenAccount{account_number: account_number, initial_balance: 1_000}, OpenAccountHandler)

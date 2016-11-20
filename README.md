@@ -78,12 +78,39 @@ Below you can see several resources I researched before writing this lib.
   aggregate structure, using buffers. 
 
 
-#### CQRS concepts
+## CQRS concepts
 
 http://softwareengineering.stackexchange.com/questions/157522/cqrs-event-sourcing-is-it-correct-that-commands-are-generally-communicated 
 
 
-If something sends a command, it entails expectation that it will be fulfilled. If you simply publish and hope that something somewhere picks it up and acts on it, there is no guarantee that this will be the case. By extrapolation, you also don't know if multiple handlers don't decide to act on a command, possibly resulting in the same change being applied more than once. 
+### Aggregates
+
+
+Ie re two ways to make use of the version number in the
+aggregate instance:
+•	 Optimistic: Append the event to the event-stream if the latest
+event in the event-stream is the same version as the current,
+in-memory, instance.
+•	 Pessimistic: Load all the events from the event stream that have
+a version number greater than the version of the current,
+in-memory, instance.
+
+
+### Commands
+something sends a command, it entails expectation that it will be fulfilled. If you simply publish and hope that something somewhere picks it up and acts on it, there is no guarantee that this will be the case. By extrapolation, you also don't know if multiple handlers don't decide to act on a command, possibly resulting in the same change being applied more than once. 
+
+
+
+### Messaging
+CQRS and event sourcing use two types of messages: commands and events. Typically, systems that implement the CQRS pattern are large-scale, distributed systems and therefore you need a reliable, distributed messaging infrastructure to transport the messages between your senders/publishers and receivers/subscribers. 
+For commands that have a single recipient you will typically use a queue topology. For events, that may have multiple recipients you will typically use a pub/sub topology.
+
+
+### Events
+Where you have multiple versions of an event type, you have two basic choices of how to handle the multiple versions: you can either continue to support multiple versions of the event in your domain classes, or use a mechanism to convert old versions of events to the latest version whenever they are
+encountered by the system.
+The first option may be the quickest and simplest approach to adopt because it typically doesn’t require any changes to your infrastructure. However, this approach will eventually pollute your domain classes as they end up supporting more and more versions of your events, but if you don’t anticipate many changes to your event definitions this may be acceptable. (CQRS journey pg. 270)
+
 
 Events, on the other hand, are informative in nature, and it's reasonable to expect zero, two, or more components to be interested in a particular event. We don't really care in the scope of making the requested change. 
 

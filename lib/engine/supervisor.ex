@@ -7,13 +7,14 @@ defmodule Engine.Supervisor do
   @event_store Engine.EventStore
   @module      __MODULE__
 
-  def start_link, do: Supervisor.start_link __MODULE__, :ok
+  def start_link, do: Supervisor.start_link(@module, :ok)
 
 
   def init(:ok) do
     event_store_settings = Application.get_env :extreme, :event_store
 
     children = [
+      supervisor(Task.Supervisor, [[name: Engine.Command.TaskDispatcher]]),
       worker(Extreme,  [event_store_settings, [name: @event_store]]),
       worker(Engine.Bus, [], restart: :temporary)
     ]
@@ -22,3 +23,4 @@ defmodule Engine.Supervisor do
 
 
 end
+

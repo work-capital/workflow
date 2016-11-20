@@ -1,4 +1,3 @@
-# Original Work: Copyright (c) 2016 Ben Smith (ben@10consulting.com)
 defmodule Engine.Aggregate.Aggregate do
   defmacro __using__(fields: fields) do
     quote do
@@ -14,7 +13,6 @@ defmodule Engine.Aggregate.Aggregate do
                 state: nil
 
       defmodule State, do: defstruct unquote(fields)
-
       # @doc "Create a new aggregate struct given a unique identity"
       # def new(uuid), do:
       #   %@module{uuid: uuid, snapshot_period: @snapshot_p, state: %@module.State{} }
@@ -66,3 +64,8 @@ defmodule Engine.Aggregate.Aggregate do
   end
 end
 
+
+
+
+# Original Work: Copyright (c) 2016 Ben Smith (ben@10consulting.com)
+# Modified Work: Copyright (c) 2016 Work Capital (henry@work.capital)
