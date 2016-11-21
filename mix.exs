@@ -14,7 +14,9 @@ defmodule Engine.Mixfile do
   end
 
   # make ex files available in test suites
+  # so you can even in iex -S mix, do "Engine.Example.Account.new("AC-123")
   defp elixirc_paths(:test), do: ["lib", "test/engine/example", "test/engine/helpers"]
+  defp elixirc_paths(:dev),  do: ["lib", "test/engine/example", "test/engine/helpers"]
   defp elixirc_paths(_), do: ["lib"]
 
   def application do

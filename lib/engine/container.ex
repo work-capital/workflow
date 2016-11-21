@@ -31,7 +31,7 @@ defmodule Engine.Container do
   defstruct uuid: nil,                  # uuid, obvious
             name: nil,                  # use it to concatenate to the UUID and give a meaningful name
             module: nil,                # the module name of the aggregate pure functional data structure 
-            snapshot_period: nil,       # every number of event, we snapshot
+            #snapshot_period: nil,       # every number of event, we snapshot
             state: nil,                 # the data structure  process_manager | state
             dispatcher: nil,            # used specifically by the process manager
             last_seen_event_id: nil     # used specifically by the process manager
@@ -114,7 +114,7 @@ defmodule Engine.Container do
         new_state = struct_from_map(snapshot.state, as: state)  # our map has keys as strings
         %{snapshot | state: new_state}                   # so we need a custom converter
       {:error, reason} ->
-        Logger.error "Snapshot unloaded for #{uuid} because #{reason}, so creating a fresh data structure"
+        Logger.debug "Snapshot unloaded for #{uuid} because #{reason}, so creating a fresh data structure"
         module.new(uuid)
     end
   end
