@@ -16,8 +16,8 @@ defmodule Engine.Repository do
 
 
   @doc "Open an aggregate from cache, snapshot, events, and if not found, create a new one"
-  def open_aggregate(module, uuid) when is_integer(uuid) or is_atom(uuid) or is_bitstring(uuid) do
-    uuid = to_string(uuid)
+  def open_aggregate(module, uuid) do #when is_integer(uuid) or is_atom(uuid) or is_bitstring(uuid) do
+    #uuid = to_string(uuid)
     case :syn.find_by_key(uuid) do
       :undefined ->
         pid = start_aggregate(Engine.Aggregate.Supervisor, module, uuid)

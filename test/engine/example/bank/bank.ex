@@ -1,11 +1,12 @@
 defmodule Engine.Example.MoneyTransfer do
-  use Aggregate, fields: [transfer_uuid: nil, source_account: nil, target_account: nil, amount: 0, reversed?: false]
+  use Engine.Aggregate.Aggregate,
+    fields: [transfer_uuid: nil, source_account: nil, target_account: nil, amount: 0, reversed?: false]
   alias Engine.Example.MoneyTransfer
 
 
   ### ALIASES
-  alias Commands.{TransferMoney}
-  alias Events.{MoneyTransferRequested}
+  alias Engine.Example.Bank.Commands.{TransferMoney}
+  alias Engine.Example.Bank.Events.{MoneyTransferRequested}
 
   ### API
   def transfer_money(%MoneyTransfer{} = money_transfer, 

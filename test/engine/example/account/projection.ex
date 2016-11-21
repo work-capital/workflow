@@ -1,5 +1,5 @@
 defmodule Engine.Example.AccountBalanceHandler do
-  alias Engine.Example.Account.Events.{BankAccountOpened,MoneyDeposited}
+  alias Engine.Example.Account.Events.{AccountOpened,MoneyDeposited}
 
   @behaviour Engine.Event.Handler
 

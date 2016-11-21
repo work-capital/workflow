@@ -1,4 +1,4 @@
-defmodule Engine.Example.DepositMoneyHandler do
+defmodule Engine.Example.Account.DepositMoneyHandler do
   alias Engine.Example.Account
   alias Engine.Example.Account.Commands.DepositMoney
 
@@ -11,7 +11,7 @@ defmodule Engine.Example.DepositMoneyHandler do
 end
 
 
-defmodule Engine.Example.OpenAccountHandler do
+defmodule Engine.Example.Account.OpenAccountHandler do
   alias Engine.Example.Account
   alias Engine.Example.Account.Commands.{OpenAccount,CloseAccount}
 
@@ -30,7 +30,7 @@ end
 
 
 
-defmodule Engine.Example.WithdrawMoneyHandler do
+defmodule Engine.Example.Account.WithdrawMoneyHandler do
   alias Engine.Example.Account
   alias Engine.Example.Account.Commands.WithdrawMoney
 

@@ -1,11 +1,13 @@
 defmodule Engine.Example.Account do
-  use Engine.Aggregate, fields: [account_number: nil, balance: 0, is_active?: false]
+  use Engine.Aggregate.Aggregate, fields: [account_number: nil, 
+                                           balance: 0, 
+                                           is_active?: false]
   alias Engine.Example.Account
 
 
   ### ALIASES
   alias Engine.Example.Account.Commands.{OpenAccount,DepositMoney,WithdrawMoney,CloseAccount}
-  alias Engine.Example.Account.Event.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountClosed}
+  alias Engine.Example.Account.Events.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountClosed}
 
   ### API
   def open_account(%Account{state: %{is_active?: true}}, %OpenAccount{}), do: {:error, :account_already_open}

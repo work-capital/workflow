@@ -5,6 +5,7 @@ defmodule Engine.Mixfile do
     [app: :engine,
      version: "0.1.0",
      elixir: "~> 1.3",
+     elixirc_paths: elixirc_paths(Mix.env),
      description: description(),
      package: package(),
      build_embedded: Mix.env == :prod,
@@ -12,6 +13,9 @@ defmodule Engine.Mixfile do
      deps: deps()]
   end
 
+  # make ex files available in test suites
+  defp elixirc_paths(:test), do: ["lib", "test/engine/example", "test/engine/helpers"]
+  defp elixirc_paths(_), do: ["lib"]
 
   def application do
     [applications: [:calendar, :mongodb, :poolboy, :logger],
