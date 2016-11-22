@@ -20,7 +20,7 @@ defmodule Engine.Repository do
     #uuid = to_string(uuid)
     case :syn.find_by_key(uuid) do
       :undefined ->
-        pid = start_aggregate(Engine.Aggregate.Supervisor, module, uuid)
+        pid = start_aggregate(module, uuid)
         Logger.info "Repository starting aggregate #{uuid}"
         add_to_cache(uuid, pid)
         {:ok, pid}
@@ -35,8 +35,8 @@ defmodule Engine.Repository do
   # INTERNAL FUNCTIONS  #
   #######################
 
-  defp start_aggregate(supervisor, module, uuid) do
-    {:ok, pid} = Aggregate.Supervisor.start_aggregate(supervisor, module, uuid)
+  defp start_aggregate(module, uuid) do
+    {:ok, pid} = Aggregate.Supervisor.start_aggregate(module, uuid)
     add_to_cache(uuid, pid)
     Process.monitor(pid)
     pid

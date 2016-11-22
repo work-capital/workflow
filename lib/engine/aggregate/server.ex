@@ -15,6 +15,7 @@ defmodule Engine.Aggregate.Server do
 
   ### API ##############
 
+
   @doc "Start, suitable for aggregates"
   def start_link(module, uuid), do:
     GenServer.start_link(@module, %Container{ module: module, uuid: uuid })

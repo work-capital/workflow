@@ -1,7 +1,7 @@
 defmodule Engine.Supervisor do
   use Supervisor
   @docmodule """
-  this is the main application supervisor, we start from here the Extreme driver to communicate with Eventstore
+  Main application supervisor, we start from here the Extreme driver to communicate with Eventstore
   database, and start the Bus, that all aggregators, processes managers, etc... will handle
   """
   @event_store Engine.EventStore
@@ -15,6 +15,7 @@ defmodule Engine.Supervisor do
 
     children = [
       supervisor(Task.Supervisor, [[name: Engine.Command.TaskDispatcher]]),
+      supervisor(Engine.Aggregate.Supervisor, [[name: Engine.Aggregate.Supervisor]]),
       worker(Extreme,  [event_store_settings, [name: @event_store]]),
       worker(Engine.Bus, [], restart: :temporary)
     ]

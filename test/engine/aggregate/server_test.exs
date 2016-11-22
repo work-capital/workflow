@@ -20,9 +20,9 @@ defmodule Engine.Aggregate.ServerTest do
     account_number = UUID.uuid4
     account = Account.new(account_number)
 
-    res = Repository.open_aggregate(Account, account_number)
+    #res = Repository.open_aggregate(Account, account_number)
 
-    IO.inspect res
+    #IO.inspect res
     #{:ok, aggregate} = Registry.open_aggregate(BankAccount, account_number)
 
     # :ok = Aggregate.execute(aggregate, %OpenAccount{account_number: account_number, initial_balance: 1_000}, OpenAccountHandler)
