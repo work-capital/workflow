@@ -9,6 +9,9 @@ defmodule Engine.Aggregate.ServerTest do
   alias Engine.Example.Account.Event.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountClosed}
 
   ### HANDLERS
+  alias Engine.Example.Account.DepositMoneyHandler
+  alias Engine.Example.Account.OpenAccountHandler
+  alias Engine.Example.Account.WithdrawMoneyHandler
 
   ### AGGREGATES
   alias Engine.Example.Account
@@ -17,10 +20,9 @@ defmodule Engine.Aggregate.ServerTest do
   alias Engine.Repository
 
   test "execute command against an aggregate" do
-    account_number = UUID.uuid4
-    account = Account.new(account_number)
 
-    #res = Repository.open_aggregate(Account, account_number)
+    account_number = UUID.uuid4
+    {:ok, acc}  = Repository.open_aggregate(Account, account_number)
 
     #IO.inspect res
     #{:ok, aggregate} = Registry.open_aggregate(BankAccount, account_number)

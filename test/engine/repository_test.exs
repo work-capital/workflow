@@ -1,34 +1,29 @@
-# defmodule RepositoryTest do
-#   use ExUnit.Case
-#   require Logger
-#   alias Engine.EventStore
-#   alias Engine.Repository
-#
-#
-# 	defmodule PersonCreated,      do: defstruct [:name]
-#   defmodule PersonChangedName,  do: defstruct [:name]
-#   defmodule MyState,            do: defstruct [:state]
-#
-#
-# 	setup_all do
-#     Application.stop(:engine)
-#     :ok = Application.start(:engine)
-#   end
-#
-#   test "add, retrieve and remove PID from cache. Retrieved pid should be the same" do
-#     {:ok, pid} = Account.Supervisor.new
-#     id   = UUID.uuid4
-#     Account.Aggregate.create(pid, id)
-#     res1 = Repository.add_to_cache(id, pid)
-#     {:ok, pid2} = Repository.get_by_id(id, Account.Aggregate, Account.Supervisor)
-#     assert pid1 = pid2
-#     res2 = Repository.remove_from_cache(id)
-#     assert res1 == :ok
-#     assert res2 == :ok
-#     :ok = Account.Aggregate.stop(pid)
-#     # for n <- 1..10, do: IO.inspect Process.alive?(pid)  # see the process dying
-#   end
-#
+defmodule RepositoryTest do
+  use ExUnit.Case
+  require Logger
+  alias Engine.EventStore
+  alias Engine.Repository
+
+
+  alias Engine.Example.Account
+  alias Engine.Repository
+
+
+
+	setup_all do
+    #Application.stop(:engine)
+    #:ok = Application.start(:engine)
+    :ok
+  end
+
+  test "add, retrieve and remove PID from cache. Retrieved pid should be the same" do
+    :timer.sleep(50)
+    {:ok, pid} = Repository.open_aggregate(Account, "AC-1023")
+
+    # for n <- 1..10, do: IO.inspect Process.alive?(pid)  # see the process dying
+  end
+end
+
 #
 #   test "create, operate, load an AGGREGATE to Eventstore, using snapshot and replay" do
 #
