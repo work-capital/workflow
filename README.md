@@ -7,6 +7,12 @@ CQRS Eventsourcing Engine
 Only the data structures are working, for testing and collecting feedbacks. 
 We believe that at the begining of December 2016, the framework will be usable.
 
+### IMPORTANT AGAIN 
+We started to align our ideias with @slashdotdash, and join forces. Please, see
+commanded issues. An example app started here: https://github.com/work-capital/ev_sim 
+
+
+
 ### Thanks
 Special thanks to: 
 
