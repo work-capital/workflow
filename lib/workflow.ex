@@ -5,7 +5,7 @@ defmodule Workflow do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
     children = [
-      supervisor(Engine.Supervisor, [])
+      supervisor(Workflow.Supervisor, [])
     ]
     opts = [strategy: :one_for_one, name: Workflow.Supervisor]
     Supervisor.start_link(children, opts)
