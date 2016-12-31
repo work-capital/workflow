@@ -39,7 +39,7 @@ defmodule Engine.Mixfile do
      files: ["lib", "test", "config", "mix.exs", "README*", "LICENSE*"],
      maintainers: ["Henry Hazan", "Shmuel Kalmus"],
      licenses: ["MIT"],
-     links: %{"GitHub" => "https://github.com/work-capital/engine"}]
+     links: %{"GitHub" => "https://github.com/work-capital/workflow"}]
   end
 
 

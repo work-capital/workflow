@@ -1,12 +1,11 @@
 use Mix.Config
 
 #-------------------------------
-#  ENGINE
+#  WORKFLOW
 #-------------------------------
 
 
-config :engine,
-  nodes: [:'master@localhost', :'slave1@localhost'],          # to use with SYN if we have many nodes
+config :workflow,
   snapshot_period: 3
 
 #-------------------------------
@@ -43,18 +42,4 @@ config :logger, :log_error,
   metadata: [:pid, :application, :module, :file, :line, :id, :uuid],
   format: "$dateT$time $node $metadata[$level] $levelpad$message\n",
   level: :error
-
-#-------------------------------
-#  TEST WATCH
-#-------------------------------
-
-
-# see https://github.com/lpil/mix-test.watch how 
-# to exclude folders and files
-# config :mix_test_watch,
-# 	clear: true,     # clean the console
-#   tasks: [
-#   	"test"
-#     #"dogma"
-# ]
 
