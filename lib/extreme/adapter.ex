@@ -1,4 +1,4 @@
-defmodule Workflow.Extreme.Adatper do
+defmodule Workflow.Extreme.Adapter do
   require Logger
   @moduledoc """ 
   Interface with the Extreme EventStore driver to save and read to EVENTSTORE.
@@ -23,7 +23,7 @@ defmodule Workflow.Extreme.Adatper do
   def append_to_stream(stream_id, expected_version,  pending_events) do
     # attention, erlangish pattern matching (^)
     message = Mapper.map_write_events(stream_id, pending_events)
-    version = expected_version + 1 # postgre driver counts + 1, so let's fix adding 1 here
+    version = expected_version# postgre driver counts + 1, so let's fix adding 1 here
     {:ok, %WriteEventsCompleted{first_event_number: ^version}} =
       Extreme.execute(@extreme, message)
     :ok

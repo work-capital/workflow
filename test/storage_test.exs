@@ -34,10 +34,9 @@ defmodule Workflow.StorageTest do
 
 
   test "should append events to stream" do
+    config  = Application.get_env(:workflow, :adapter, [])
     stream_id = "storage-test-01-" <> UUID.uuid4
     evts = ExampleAggregate.append_items(%ExampleAggregate{last_index: 0}, 9)
-    # driver = Application.get_env(:commanded, Commanded.Storage, [])
-    # IO.inspect driver
     res = Storage.append_to_stream(stream_id, 0, evts)
     assert res == :ok
     # again
@@ -52,8 +51,8 @@ defmodule Workflow.StorageTest do
     res  = Storage.append_to_stream(stream_id, 0, evts)
     res2 = Storage.read_stream_forward(stream_id, 3, 2)
     expected_res = {:ok,
-      [%Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 3},
-      %Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 4}]}
+      [%Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 4},
+      %Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 5}]}
     assert res2 == expected_res
   end
 

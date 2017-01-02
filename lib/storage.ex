@@ -29,10 +29,8 @@ defmodule Workflow.Storage do
     adapter.read_stream_forward(stream_id, start_version, read_event_batch_size)
 
 
-  defp adapter() do
-    config  = Application.get_env(:workflow, __MODULE__, [])
-    config[:adapter] || @default_adapter
-  end
+  defp adapter(), do:
+    Application.get_env(:workflow, :adapter, @default_adapter)
 
 
 end
