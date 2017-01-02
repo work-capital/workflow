@@ -7,7 +7,7 @@ import_config "#{Mix.env}.exs"
 
 
 config :workflow,
-  storage: Engine.Storage.Eventstore
+  adapter: Workflow.Extreme.Adapter
 
 #-------------------------------
 #  EXTREME [Eventstore Driver]
