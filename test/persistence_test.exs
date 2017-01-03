@@ -40,15 +40,16 @@ defmodule Workflow.PersistenceTest do
 
   test "Apply events for a data structure" do
 
+    stream_id = "persistence-test-01-" <> UUID.uuid4
     aggregate = %ExampleAggregate{}
 
     events = ExampleAggregate.append_items(aggregate, 6)
-    res = Persistence.persist_events(events, "id-02", 0)
+    res = Persistence.persist_events(events, stream_id, 0)
 
     res = Persistence.apply_events(ExampleAggregate, aggregate, events)
 
 
     last_state = %ExampleAggregate{items: [1, 2, 3, 4, 5, 6], last_index: 6}
-    assert res = last_state
+    assert res == last_state
   end
 end
