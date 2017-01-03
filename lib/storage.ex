@@ -29,6 +29,7 @@ defmodule Workflow.Storage do
     adapter.read_stream_forward(stream_id, start_version, read_event_batch_size)
 
 
+  @doc "Get choosen db adapter from config files"
   defp adapter(), do:
     Application.get_env(:workflow, :adapter, @default_adapter)
 
