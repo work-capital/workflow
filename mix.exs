@@ -25,7 +25,7 @@ defmodule Engine.Mixfile do
       {:uuid, "~> 1.1.4" },
       {:logger_file_backend, "~> 0.0.9"},  # Save logs to file  [remmember to create a ~/logs directory!]
 			# DEVs
-			{:dogma, "~> 0.1.7", only: [:dev]},      # code linter
+      # {:dogma, "~> 0.1.7", only: [:dev]},      # code linter
       {:dialyxir, "~> 0.3.5", only: [:dev]},   # simplify dialyzer, type: mix dialyzer.plt first
 			{:mix_test_watch, "~> 0.2", only: :dev}, # use mix test.watch for TDD development
       {:ex_doc, ">= 0.0.0", only: :dev}
