@@ -27,17 +27,29 @@ defmodule Workflow.Container do
   def execute() do
   end
 
+  def get_data(container) do
+    GenServer.call(container, {:data})
+  end
+
 
   ## CALLBACKS
   
   def init(%Container{} = state) do
-    GenServer.cast(self, {:replay})
+    #GenServer.cast(self, {:replay})
     {:ok, state}
+  end
+
+  def handle_call({:data}, _from, %Container{data: data} = state) do
+    {:reply, data, state}
   end
 
   def handle_cast({:replay}, %Container{} = state) do
     state = replay(state)
     {:noreply, state}
+  end
+
+  def handle_call({:data}, _from, %Container{data: data} = state) do
+    {:reply, data, state}
   end
 
   ## INTERNALS
@@ -70,6 +82,9 @@ defmodule Workflow.Container do
     # end
   end
 
+  # update the process instance's state by applying the event
+  def mutate_state(module, data, event), do:
+    module.apply(data, event)
 
 
 end

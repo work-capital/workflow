@@ -1,18 +1,8 @@
-CQRS Eventsourcing Engine
-=========================
+CQRS Eventsourcing Workflow Engine
+==================================
 
 *IMPORTANT*: use only for research, and please, feedback. we will update when we
 start using in production
-
-
-### Thanks
-Special thanks to: 
-
-[burmajam](https://github.com/burmajam) for sharing the very 
-well written extreme driver to connect to Eventstore. 
-
-[slashdotdash](https://github.com/slashdotdash/commanded) for sharing the CQRS
-framework, where many parts of the code here are from his framework.
 
 
 
@@ -32,10 +22,13 @@ your pure functions over them, under the "side effects" dimension.
 As aggregates listen for commands, process managers listen for events (sometimes commands also), and as aggregates emmits events, process managers dispatch commands.
 
 * pure functional data structures for aggregates and process managers
+* use monads (monadex) to simulate different business scenarios
 * one abstraction to implement side-effects
 * multiple data-stores
 * plugable message queue for publishing events
 * one gen_server implementation for aggregates and process managers
+* automatic process-manager creation based on correlation-ids (as suggested by Greg Young)
+* easy use of FSM on process managers
 
 ### Develop
 
@@ -47,9 +40,8 @@ Send events from the prompt:
 
 ```
 iex -S mix
+TODO: add example
 
-Engine.Bus.send_command(%{%Account.Command.CreateAccount{} | :id => "jsdf"})
-Engine.Bus.send_command(%{%Account.Command.DepositMoney{} | :id => "jsdf", :amount => 23})
 ```
 
 
@@ -62,30 +54,17 @@ docker run --name eventstore-node -it -p 2113:2113 -p 1113:1113 eventstore/event
 ```
 
 #### Resources
-Below you can see several resources I researched before writing this lib. 
+Below you can see several resources I researched before writing this lib.
+Special thanks for Ben Smith, where many ideas were copied from
+[commanded](https://github.com/slashdotdash/commanded) library.
 
+* [burmajam](https://github.com/burmajam) for sharing the very 
+well written extreme driver to connect to Eventstore. 
+* [slashdotdash](https://github.com/slashdotdash/commanded) for sharing the CQRS
+framework, where many parts of the code here are from his framework.
 * [cqrs-erlang](https://github.com/bryanhunter/cqrs-with-erlang) - A memory
   model using standard spawn functions CQRS in erlang. 
 * [gen-aggregate](https://github.com/burmajam/gen_aggregate/) - Macro for the
   aggregate structure, using buffers. 
-
-
-#### CQRS concepts
-
-http://softwareengineering.stackexchange.com/questions/157522/cqrs-event-sourcing-is-it-correct-that-commands-are-generally-communicated 
-
-
-If something sends a command, it entails expectation that it will be fulfilled. If you simply publish and hope that something somewhere picks it up and acts on it, there is no guarantee that this will be the case. By extrapolation, you also don't know if multiple handlers don't decide to act on a command, possibly resulting in the same change being applied more than once. 
-
-Events, on the other hand, are informative in nature, and it's reasonable to expect zero, two, or more components to be interested in a particular event. We don't really care in the scope of making the requested change. 
-
-**Example** 
-
-This could be compared to real life. If you have three children, walk into a room and simply shout "Clean the bathroom," you have no guarantee that someone will, and perhaphs if it won't be done twice (if you have obedient children that is ;-) You should fare better if you assign a specific child to do what you want done. 
-
-When that child finishes its job however, it's convenient if it shouts out "bathroom has been cleaned," so that everyone who wants to brush their teeth knows they can now do so. 
-
-
-
 
 

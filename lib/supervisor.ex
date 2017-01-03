@@ -10,7 +10,8 @@ defmodule Workflow.Supervisor do
     event_store_settings = Application.get_env :extreme, :event_store
 
     children = [
-      worker(Extreme,  [event_store_settings, [name: @extreme]]),
+      worker(Extreme,  [event_store_settings, [name: @extreme]])
+      #worker(Workflow.Container, []),
       #worker(Workflow.Router, [], restart: :temporary)
     ]
     supervise children, strategy: :one_for_one

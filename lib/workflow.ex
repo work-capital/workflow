@@ -9,6 +9,8 @@ defmodule Workflow do
     ]
     opts = [strategy: :one_for_one, name: Workflow.Supervisor]
     Supervisor.start_link(children, opts)
+    # start containter supervisor for simple_one_to_one workers
+    Workflow.ContainerSup.start_link()
   end
 
 
