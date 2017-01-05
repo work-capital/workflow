@@ -15,49 +15,45 @@ defmodule Workflow.Domain.Account do
   end
 
   defmodule Events do
-    defmodule AccountOpened,  do: defstruct [:account_number, :initial_balance]
+    defmodule AccountOpened,      do: defstruct [:account_number, :initial_balance]
     defmodule MoneyDeposited,     do: defstruct [:account_number, :transfer_uuid, :amount, :balance]
     defmodule MoneyWithdrawn,     do: defstruct [:account_number, :transfer_uuid, :amount, :balance]
     defmodule AccountOverdrawn,   do: defstruct [:account_number, :balance]
-    defmodule AccountClosed,  do: defstruct [:account_number]
+    defmodule AccountClosed,      do: defstruct [:account_number]
   end
 
   alias Commands.{OpenAccount,DepositMoney,WithdrawMoney,CloseAccount}
   alias Events.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountOverdrawn,AccountClosed}
 
-  def open_account(%Account{state: nil}, 
+  def handle(%Account{state: nil}, 
     %OpenAccount{account_number: account_number, initial_balance: initial_balance})
-    when is_number(initial_balance) and initial_balance > 0
-  do
-    %AccountOpened{account_number: account_number, initial_balance: initial_balance}
+    when is_number(initial_balance) and initial_balance > 0 do
+      %AccountOpened{account_number: account_number, initial_balance: initial_balance}
   end
 
-  def deposit(%Account{state: :active, balance: balance}, 
+  def handle(%Account{state: :active, balance: balance}, 
     %DepositMoney{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount})
-    when is_number(amount) and amount > 0
-  do
-    balance = balance + amount
-    %MoneyDeposited{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance}
+    when is_number(amount) and amount > 0 do
+      balance = balance + amount
+      %MoneyDeposited{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance}
   end
 
-  def withdraw(%Account{state: :active, balance: balance}, 
+  def handle(%Account{state: :active, balance: balance}, 
     %WithdrawMoney{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount})
-    when is_number(amount) and amount > 0
-  do
-    case balance - amount do
-      balance when balance < 0 ->
-        [
-          %MoneyWithdrawn{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance},
-          %AccountOverdrawn{account_number: account_number, balance: balance},
-        ]
-      balance ->
-        %MoneyWithdrawn{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance}
-    end
+    when is_number(amount) and amount > 0 do
+      case balance - amount do
+        balance when balance < 0 ->
+          [
+            %MoneyWithdrawn{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance},
+            %AccountOverdrawn{account_number: account_number, balance: balance},
+          ]
+        balance ->
+          %MoneyWithdrawn{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance}
+      end
   end
 
-  def close_account(%Account{state: :active}, %CloseAccount{account_number: account_number}) do
-    %AccountClosed{account_number: account_number}
-  end
+  def handle(%Account{state: :active}, 
+    %CloseAccount{account_number: account_number}), do: %AccountClosed{account_number: account_number}
 
   # state mutatators
 

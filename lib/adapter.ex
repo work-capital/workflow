@@ -6,22 +6,14 @@ defmodule Workflow.Adapter do
   necessary data to be used inside Commanded
   """
 
-  @type stream            :: String.t     # The Stream ID
-  @type position          :: integer      # From which position we start reading the stream
-  @type events            :: [struct()]   # TODO: implement common data strucutre 
-  @type event_data        :: [struct()]
-  @type expected_version  :: number
-  @type stream_id         :: String.t
-  @type batch             :: [struct()]
-  @type state             :: struct()
-  @type reason            :: atom
-  @type snapshot          :: struct()
-  @type start_pos         :: position     # When appending many events, the start position we got
-  @type end_pos           :: position     # When appending many events, the last position we got
-  @type read_event_batch_size  :: number
+  @type stream_id              :: String.t
   @type start_version          :: number
-  @type type              :: atom
-  @type version           :: number
+  @type read_event_batch_size  :: number
+  @type batch                  :: [struct()]
+  @type stream                 :: String.t     # The Stream ID
+  @type reason                 :: atom
+  @type expected_version       :: number
+  @type event_data             :: [struct()]
 
 
 

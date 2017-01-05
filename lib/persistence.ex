@@ -20,10 +20,8 @@ defmodule Workflow.Persistence do
   @type stream    :: String.t
 
 
-  #@spec fetch_state(module, stream)    ::   {:ok, state}  |  {:error, reason}
 
-
-  @doc "Rebuild from events"
+  @doc "Rebuild if events are found, if not found, return the container state with an empty data structure"
   def rebuild_from_events(%Container{} = state),  do: rebuild_from_events(state, 1)
   def rebuild_from_events(%Container{uuid: uuid, module: module, data: data} = state, start_version) do
     case Storage.read_stream_forward(uuid, start_version, @read_event_batch_size) do
@@ -48,10 +46,11 @@ defmodule Workflow.Persistence do
             rebuild_from_events(state, start_version + @read_event_batch_size)
         end
 
-      {:error, :stream_not_found} ->
-        # aggregate does not exist so return empty state
+      {:error, _} ->
+        # data-structure does not exist so return empty state
         state
     end
+    state
   end
 
   def persist_events([], _aggregate_uuid, _expected_version), do: :ok

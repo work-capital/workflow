@@ -55,5 +55,12 @@ defmodule Workflow.StorageTest do
       %Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 5}]}
     assert res2 == expected_res
   end
+  
+  test "read stream forward for a non-existing stream, and generate error" do
+    stream_id = UUID.uuid4
+    res = Storage.read_stream_forward(stream_id, 0, 2)
+    {error, reason} = res
+    assert error == :error
+  end
 
 end

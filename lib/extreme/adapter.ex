@@ -34,7 +34,7 @@ defmodule Workflow.Extreme.Adapter do
     message = Mapper.map_read_stream(stream_id, start_version, read_event_batch_size)
     case Extreme.execute(@extreme, message) do
       {:ok, events} -> Mapper.extract_events({:ok, events})
-      {:error, reason} -> {:error, reason}
+      {:error, reason, _} -> {:error, reason}
     end
   end
 
