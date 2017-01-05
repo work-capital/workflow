@@ -72,14 +72,14 @@ defmodule RepositoryTest do
     stream_id = "repository-test-01-" <> UUID.uuid4
     container = Repository.start_container(CounterAggregate, stream_id)
     # process two commands
-    Container.process_message(container, %Add{quantity: 9})
-    Container.process_message(container, %Remove{quantity: 7})
+    Container.process_message(container, %Add{quantity: 7})
+    Container.process_message(container, %Remove{quantity: 3})
     # get state data
     data = Container.get_data(container)
     state = Container.get_state(container)
     IO.inspect state
 
-    assert data== %CounterAggregate{counter: 2}  #  9 - 7 = 2
+    assert data== %CounterAggregate{counter: 4}  #  7 - 3 = 4
   end
 
 

@@ -15,6 +15,7 @@ defmodule Workflow.Extreme.Supervisor do
       worker(Workflow.Extreme.Router, [:ok, @extreme])
       # worker(Workflow.Router, [@extreme, -1, [name: Router]])
     ]
+    #TODO: one_for_all or one_for_one ?
     supervise(children, strategy: :one_for_all)   # if we lost connection, we restart the router also
   end
 

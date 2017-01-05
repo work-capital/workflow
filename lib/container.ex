@@ -24,9 +24,6 @@ defmodule Workflow.Container do
     })
   end
 
-  def execute() do
-  end
-
   def get_data(container), do:
     GenServer.call(container, {:data})
 
@@ -50,6 +47,7 @@ defmodule Workflow.Container do
   def handle_call({:state}, _from, %Container{} = state), do:
     {:reply, state, state}
 
+  @doc "Replay the events from the eventstore db"
   def handle_cast({:restore}, %Container{module: module} = state) do
     state = Persistence.rebuild_from_events(%Container{state |
       version: 0,

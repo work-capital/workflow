@@ -22,7 +22,6 @@ defmodule Workflow.Extreme.Router do
   #   GenServer.cast self, :subscribe
   #   {:ok, state}
   # end
-  #
   def handle_cast(:subscribe, state) do
     IO.inspect "hi from subscribe"
     # read only unprocessed events and stay subscribed
