@@ -35,7 +35,26 @@ defmodule Workflow.Extreme.Adapter do
     case Extreme.execute(@extreme, message) do
       {:ok, events} -> Mapper.extract_events({:ok, events})
       {:error, reason, _} -> {:error, reason}
+      {:error, reason}    -> {:error, reason}
     end
   end
 
+  @doc "Persist state of an aggregate or process manager"
+  def persist_state(stream_id, version, module, state) do
+    version2 = version + 1 # postgre driver counts + 1, so let's fix adding 1 here
+    message  = Mapper.map_write_state(stream_id, version2, module, state)
+    {:ok, %WriteEventsCompleted{first_event_number: ^version2}} =
+      Extreme.execute(@extreme, message)
+    :ok
+  end
+
+
+  @doc "Fetch state of an aggregate or process manager"
+  def fetch_state(stream_id, state) do
+    message = Mapper.map_read_backwards(stream_id)
+    case Extreme.execute(@extreme, message) do
+      {:ok, events} -> Mapper.extract_events({:ok, events})
+      {:error, reason} -> {:error, reason}
+    end
+  end
 end

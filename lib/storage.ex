@@ -28,6 +28,13 @@ defmodule Workflow.Storage do
   def read_stream_forward(stream_id, start_version, read_event_batch_size \\ @read_event_batch_size), do:
     adapter.read_stream_forward(stream_id, start_version, read_event_batch_size)
 
+  @doc "Persist process manager state"
+  def persist_state(stream_id, version, type, data), do:
+    adapter.persist_state(stream_id, version, type, data)
+
+  @doc "Fech state, if not found, returns the same"
+  def fetch_state(stream_id, state), do:
+    adapter.fetch_state(stream_id, state)
 
   @doc "Get choosen db adapter from config files"
   defp adapter(), do:

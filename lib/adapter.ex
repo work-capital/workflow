@@ -14,6 +14,8 @@ defmodule Workflow.Adapter do
   @type reason                 :: atom
   @type expected_version       :: number
   @type event_data             :: [struct()]
+  @type state                  :: struct()
+  @type version                :: number
 
 
 
@@ -25,6 +27,10 @@ defmodule Workflow.Adapter do
   @callback append_to_stream(stream_id, expected_version, event_data) ::
     :ok | {:error, reason}
 
+  @doc "Persist a state snapshot"
+  @callback persist_state(stream_id, version, module, state)  :: :ok  | {:error, reason}
 
+  @doc "Fetch a state snapshot"
+  @callback fetch_state(stream_id, state)  :: :ok  | {:error, reason}
 
 end

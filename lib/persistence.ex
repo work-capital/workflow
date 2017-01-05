@@ -53,11 +53,23 @@ defmodule Workflow.Persistence do
     state
   end
 
+  @doc "Store events in eventstore"
   def persist_events([], _aggregate_uuid, _expected_version), do: :ok
   def persist_events(pending_events, uuid, expected_version) do
     :ok = Storage.append_to_stream(uuid, expected_version, pending_events)
   end
 
+  @doc "Rebuild state data from saved snapshot"
+  def rebuild_from_snapshot(%Container{uuid: uuid, module: module, data: data} = state) do
+    #:ok =Storage
+
+  end
+
+  @doc "Persist state data"
+  def persist_snapshot(%Container{uuid: uuid, module: module, data: data} = state) do
+    :ok = Storage.fetch_state(uuid, data)
+
+  end
 
   @doc "Receive a module that implements apply function, and rebuild the state from events"
   def apply_events(module, state, events), do:

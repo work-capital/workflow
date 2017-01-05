@@ -70,4 +70,25 @@ defmodule Workflow.Extreme.Mapper do
     )
   end
 
+  @doc "to read snapshots, we get the last saved state"
+  def map_read_backwards(stream_id) do
+    Extreme.Messages.ReadStreamEventsBackward.new(
+      event_stream_id: stream_id,
+      from_event_number: -1,
+      max_count: 1,
+      resolve_link_tos: true,
+      require_master: false
+    )
+  end
+
+  @doc "create a write message for a list of events"
+  def map_write_state(stream, version, module, state) do
+    proto_events = Enum.map(state, &create_event/1) # map the list of structs to event messages
+    WriteEvents.new(
+      event_stream_id: stream,
+      expected_version: version,
+      events: state,
+      require_master: false
+    )
+  end
 end
