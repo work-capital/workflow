@@ -1,13 +1,27 @@
 use Mix.Config
 
 #-------------------------------
-#  ENGINE
+#  WORKFLOW
 #-------------------------------
 
 
-config :engine,
-  nodes: [:'master@localhost', :'slave1@localhost'],          # to use with SYN if we have many nodes
-  snapshot_period: 3
+config :workflow,
+  adapter: Workflow.Extreme.Adapter
+
+#-------------------------------
+#  EXTREME [Eventstore Driver]
+#-------------------------------
+
+
+config :extreme, :event_store,
+  db_type: :node,
+  host: "localhost",
+  port: 1113,
+  username: "admin",
+  password: "changeit",
+  reconnect_delay: 2_000,
+  max_attempts: :infinity
+
 
 #-------------------------------
 #  LOGGER
@@ -43,18 +57,4 @@ config :logger, :log_error,
   metadata: [:pid, :application, :module, :file, :line, :id, :uuid],
   format: "$dateT$time $node $metadata[$level] $levelpad$message\n",
   level: :error
-
-#-------------------------------
-#  TEST WATCH
-#-------------------------------
-
-
-# see https://github.com/lpil/mix-test.watch how 
-# to exclude folders and files
-# config :mix_test_watch,
-# 	clear: true,     # clean the console
-#   tasks: [
-#   	"test"
-#     #"dogma"
-# ]
 
