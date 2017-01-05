@@ -1,23 +1,24 @@
 defmodule Workflow.Supervisor do
+  @module __MODULE__
+  @moduledoc """
+  Supervise zero, one or more containers
+  """
   use Supervisor
-  @extreme Workflow.Extreme
-  @module      __MODULE__
-  @stream "persistence-test-01-104355dc-1614-46e1-83cb-a65fcb5fca74"
+  require Logger
 
-  def start_link, do: 
-    Supervisor.start_link(@module, :ok)
+  def start_link, do:
+    Supervisor.start_link(__MODULE__, :ok, name: @module)
 
-
-  def init(:ok) do
-    event_store_settings = Application.get_env :extreme, :event_store
-
-    children = [
-      worker(Extreme,  [event_store_settings, [name: @extreme]]),
-      worker(Workflow.Router, [:ok, @extreme])
-      # worker(Workflow.Router, [@extreme, -1, [name: Router]])
-    ]
-    supervise children, strategy: :one_for_one
+  def start_container(module, uuid) do
+    Logger.debug(fn -> "starting process for `#{module}` with uuid #{uuid}" end)
+    Supervisor.start_child(Workflow.Supervisor, [module, uuid])
   end
 
+  def init(:ok) do
+    children = [
+      worker(Workflow.Container, [], restart: :permanent),
+    ]
 
+    supervise(children, strategy: :simple_one_for_one)
+  end
 end

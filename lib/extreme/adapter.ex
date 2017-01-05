@@ -18,7 +18,6 @@ defmodule Workflow.Extreme.Adapter do
   @type read_event_batch_size :: integer()
 
 
-
   @doc "Save a list of events to the stream."
   def append_to_stream(stream_id, expected_version,  pending_events) do
     # attention, erlangish pattern matching (^)

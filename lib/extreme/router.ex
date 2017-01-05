@@ -1,4 +1,4 @@
-defmodule Workflow.Router do
+defmodule Workflow.Extreme.Router do
   require Logger
   use GenServer
 
@@ -28,6 +28,8 @@ defmodule Workflow.Router do
     # read only unprocessed events and stay subscribed
     # {:ok, subscription} = 
     #     Extreme.read_and_stay_subscribed(state.event_store, self, state.stream, state.last_event + 1)
+    {:ok, subscription} = 
+        Extreme.read_and_stay_subscribed(state.event_store, self, "$ce-persistence", 0)
     # we want to monitor when subscription is crashed so we can resubscribe
     {:noreply, state}
     # ref = Process.monitor subscription
@@ -41,7 +43,6 @@ defmodule Workflow.Router do
 
   def handle_info({:on_event, push}, state) do
     push.event.data
-    |> :erlang.binary_to_term 
     |> process_event
     event_number = push.link.event_number
     :ok = update_last_event state.stream, event_number
