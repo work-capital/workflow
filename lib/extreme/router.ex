@@ -28,7 +28,7 @@ defmodule Workflow.Extreme.Router do
     # {:ok, subscription} = 
     #     Extreme.read_and_stay_subscribed(state.event_store, self, state.stream, state.last_event + 1)
     {:ok, subscription} = 
-        Extreme.read_and_stay_subscribed(state.event_store, self, "$ce-persistence", 0)
+        Extreme.subscribe_to(state.event_store, self, "$ce-persistence")
     # we want to monitor when subscription is crashed so we can resubscribe
     {:noreply, state}
     # ref = Process.monitor subscription

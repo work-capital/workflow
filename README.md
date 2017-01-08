@@ -23,12 +23,30 @@ As aggregates listen for commands, process managers listen for events (sometimes
 
 * pure functional data structures for aggregates and process managers
 * use monads (monadex) to simulate different business scenarios
+* once aggregates, process managers and sagas are receive messages and has a
+  state, use one source code (container.ex) to hold them all, simplifying the
+  implementation
+* flexible pipelines for all messaging processing and state mutation
 * one abstraction to implement side-effects
-* multiple data-stores
-* plugable message queue for publishing events
-* one gen_server implementation for aggregates and process managers
+* multiple data-stores from scratch
+* one event router for all process managers or sagas, using assync dispatch, to rebuild
+  or load them from memory.
+* plugable message queue for publishing events.
 * automatic process-manager creation based on correlation-ids (as suggested by Greg Young)
-* easy use of FSM on process managers
+
+
+
+### Automatic Metadata Atribuition by Pipelines
+Let's say every message has 3 ids.
+ - message ID
+ - correlation ID
+ - causation ID 
+ 
+
+When you are responding to a message (either a command or and event) you copy the correlation-ID of the message you are responding to to your message. The Causation-ID of your message is the Message-ID of the message you are responding to. 
+
+This allows you to see an entire conversation (correlation id) or to see what causes what (causation id). Correlation and causation ids in your commands and events, make it easer to find out what really happened in a so decoupled system.
+
 
 ### Develop
 

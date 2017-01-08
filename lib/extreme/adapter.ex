@@ -17,15 +17,15 @@ defmodule Workflow.Extreme.Adapter do
   @type reason                :: atom()
   @type read_event_batch_size :: integer()
 
-
   @doc "Save a list of events to the stream."
-  def append_to_stream(stream_id, expected_version,  pending_events) do
+  def append_to_stream(stream_id, expected_version, data, metadata \\ nil) do
     # attention, erlangish pattern matching (^)
-    message = Mapper.map_write_events(stream_id, pending_events)
-    version = expected_version# postgre driver counts + 1, so let's fix adding 1 here
-    {:ok, %WriteEventsCompleted{first_event_number: ^version}} =
-      Extreme.execute(@extreme, message)
-    :ok
+    message = Mapper.map_write(stream_id, data, metadata)
+    #IO.inspect message
+    IO.inspect metadata
+    version = expected_version 
+    {:ok, %WriteEventsCompleted{first_event_number: ^version}} = Extreme.execute(@extreme, message)
+     :ok
   end
 
 
@@ -33,28 +33,25 @@ defmodule Workflow.Extreme.Adapter do
   def read_stream_forward(stream_id, start_version, read_event_batch_size) do
     message = Mapper.map_read_stream(stream_id, start_version, read_event_batch_size)
     case Extreme.execute(@extreme, message) do
-      {:ok, events} -> Mapper.extract_events({:ok, events})
+      {:ok, events} -> 
+      #IO.inspect events
+        Mapper.extract_events({:ok, events})
       {:error, reason, _} -> {:error, reason}
-      {:error, reason}    -> {:error, reason}
+      {:erro, reason} -> {:error, reason}
     end
   end
 
-  @doc "Persist state of an aggregate or process manager"
-  def persist_state(stream_id, version, module, state) do
-    version2 = version + 1 # postgre driver counts + 1, so let's fix adding 1 here
-    message  = Mapper.map_write_state(stream_id, version2, module, state)
-    {:ok, %WriteEventsCompleted{first_event_number: ^version2}} =
-      Extreme.execute(@extreme, message)
-    :ok
+  @doc "Read stream, transforming messages in an event list ready for replay"
+  def read_stream_backward(stream_id, data) do
+    # TODO: read 
+    # message = Mapper.map_read_stream(stream_id, start_version, read_event_batch_size)
+    # case Extreme.execute(@extreme, message) do
+    #   {:ok, events} -> 
+    #     IO.inspect events
+    #     Mapper.extract_events({:ok, events})
+    #   {:error, reason, _} -> {:error, reason}
+    #   {:erro, reason} -> {:error, reason}
+    # end
   end
 
-
-  @doc "Fetch state of an aggregate or process manager"
-  def fetch_state(stream_id, state) do
-    message = Mapper.map_read_backwards(stream_id)
-    case Extreme.execute(@extreme, message) do
-      {:ok, events} -> Mapper.extract_events({:ok, events})
-      {:error, reason} -> {:error, reason}
-    end
-  end
 end

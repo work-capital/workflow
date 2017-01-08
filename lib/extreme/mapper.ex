@@ -10,10 +10,6 @@ defmodule Workflow.Extreme.Mapper do
   alias Extreme.Messages.WriteEvents
   alias Extreme.Messages.NewEvent
 
-  def map_to_event_data(events, correlation_id) when is_list(events) do
-    Enum.map(events, &map_to_event_data(&1, correlation_id))
-  end
-
 
   def extract_events({:ok, response}),   do: {:ok, Enum.map(response.events, &extract_data/1)}
   def extract_events({:error,_}),        do: {:error, :not_found}
@@ -36,8 +32,26 @@ defmodule Workflow.Extreme.Mapper do
   defp deserialize(data, struct \\ nil),
     do: Serialization.decode(data, struct)
 
+  @doc "create a write message to write events, state, or anything else"
+  def map_write(stream, data, metadata) do
+    IO.inspect metadata
+    WriteEvents.new(
+      event_stream_id: stream,
+      expected_version: -2,
+      events: [NewEvent.new(
+        event_id: Extreme.Tools.gen_uuid(),
+        event_type: to_string(data.__struct__),
+        data_content_type: 0,
+        metadata_content_type: 0,
+        data: Serialization.encode(data),
+        meta: Serialization.encode(metadata) #Serialization.encode(metadata)
+      )],
+      require_master: false
+    )
+  end
+
   @doc "create a read stream message"
-  def map_read_stream(stream_id, from_event_number, max_count) do
+  def map_read_forwards(stream_id, from_event_number, max_count) do
     %ReadStreamEvents{
       event_stream_id: stream_id,
       from_event_number: from_event_number,
@@ -45,29 +59,6 @@ defmodule Workflow.Extreme.Mapper do
       resolve_link_tos: true,
       require_master: false
     }
-  end
-
-  @doc "create a write message for a list of events"
-  def map_write_events(stream, events) do
-    proto_events = Enum.map(events, &create_event/1) # map the list of structs to event messages
-    WriteEvents.new(
-      event_stream_id: stream,
-      expected_version: -2,
-      events: proto_events,
-      require_master: false
-    )
-  end
-
-  @doc "create one event message based on a struct"
-  defp create_event(event) do
-    NewEvent.new(
-      event_id: Extreme.Tools.gen_uuid(),
-      event_type: to_string(event.__struct__),
-      data_content_type: 0,
-      metadata_content_type: 0,
-      data: Serialization.encode(event),
-      meta: ""
-    )
   end
 
   @doc "to read snapshots, we get the last saved state"
@@ -81,14 +72,4 @@ defmodule Workflow.Extreme.Mapper do
     )
   end
 
-  @doc "create a write message for a list of events"
-  def map_write_state(stream, version, module, state) do
-    proto_events = Enum.map(state, &create_event/1) # map the list of structs to event messages
-    WriteEvents.new(
-      event_stream_id: stream,
-      expected_version: version,
-      events: state,
-      require_master: false
-    )
-  end
 end

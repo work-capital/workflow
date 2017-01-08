@@ -13,24 +13,23 @@ defmodule Workflow.Adapter do
   @type stream                 :: String.t     # The Stream ID
   @type reason                 :: atom
   @type expected_version       :: number
-  @type event_data             :: [struct()]
+  @type data                   :: struct()
+  @type metadata               :: struct()
   @type state                  :: struct()
   @type version                :: number
 
 
 
+
+  @doc "Load a list of events from an specific position"
+  @callback append_to_stream(stream_id, expected_version, data, metadata) ::
+    :ok | {:error, reason}
+
   @doc "Load a batch of events from storage"
   @callback read_stream_forward(stream_id, start_version, read_event_batch_size) ::
     {:ok, batch} | {:error, reason}
 
-  @doc "Load a list of events from an specific position"
-  @callback append_to_stream(stream_id, expected_version, event_data) ::
-    :ok | {:error, reason}
-
-  @doc "Persist a state snapshot"
-  @callback persist_state(stream_id, version, module, state)  :: :ok  | {:error, reason}
-
   @doc "Fetch a state snapshot"
-  @callback fetch_state(stream_id, state)  :: :ok  | {:error, reason}
+  @callback read_stream_backward(stream_id, state)  :: :ok  | {:error, reason}
 
 end
