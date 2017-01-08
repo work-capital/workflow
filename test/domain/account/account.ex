@@ -26,16 +26,16 @@ defmodule Workflow.Domain.Account do
   alias Events.{AccountOpened,MoneyDeposited,MoneyWithdrawn,AccountOverdrawn,AccountClosed}
 
   def handle(%Account{state: nil}, 
-    %OpenAccount{account_number: account_number, initial_balance: initial_balance})
-    when is_number(initial_balance) and initial_balance > 0 do
-      %AccountOpened{account_number: account_number, initial_balance: initial_balance}
+      %OpenAccount{account_number: account_number, initial_balance: initial_balance})
+      when is_number(initial_balance) and initial_balance > 0 do
+    %AccountOpened{account_number: account_number, initial_balance: initial_balance}
   end
 
   def handle(%Account{state: :active, balance: balance}, 
-    %DepositMoney{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount})
-    when is_number(amount) and amount > 0 do
-      balance = balance + amount
-      %MoneyDeposited{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance}
+      %DepositMoney{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount})
+      when is_number(amount) and amount > 0 do
+    balance = balance + amount
+    %MoneyDeposited{account_number: account_number, transfer_uuid: transfer_uuid, amount: amount, balance: balance}
   end
 
   def handle(%Account{state: :active, balance: balance}, 
