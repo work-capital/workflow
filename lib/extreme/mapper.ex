@@ -44,7 +44,7 @@ defmodule Workflow.Extreme.Mapper do
         data_content_type: 0,
         metadata_content_type: 0,
         data: Serialization.encode(data),
-        meta: Serialization.encode(metadata) #Serialization.encode(metadata)
+        metadata: Serialization.encode("{ \"metadata\": {\"role\": \"jim\"}   }")
       )],
       require_master: false
     )
