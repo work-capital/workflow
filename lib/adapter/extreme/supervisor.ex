@@ -1,4 +1,4 @@
-defmodule Workflow.Extreme.Supervisor do
+defmodule Workflow.Adapter.Extreme.Supervisor do
   use Supervisor
   @extreme Workflow.Extreme
   @module      __MODULE__
@@ -12,7 +12,7 @@ defmodule Workflow.Extreme.Supervisor do
 
     children = [
       worker(Extreme,  [event_store_settings, [name: @extreme]], restart: :permanent),
-      worker(Workflow.Extreme.Router, [:ok, @extreme])
+      worker(Workflow.Adapter.Extreme.Router, [:ok, @extreme])
       # worker(Workflow.Router, [@extreme, -1, [name: Router]])
     ]
     #TODO: one_for_all or one_for_one ?

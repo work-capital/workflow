@@ -1,4 +1,4 @@
-defmodule Workflow.Extreme.Serialization do
+defmodule Workflow.Adapter.Extreme.Serialization do
   @protocol Json     # -> choose here your protocol TODO: move it to config
 
   def encode(data),

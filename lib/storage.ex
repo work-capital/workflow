@@ -8,7 +8,7 @@ defmodule Workflow.Storage do
   http://elixir-lang.org/docs/stable/elixir/typespecs
   """
   # defaults
-  @default_adapter Workflow.Extreme.Adapter
+  @default_adapter Workflow.Adapter.Extreme
   @read_event_batch_size 100
 
   # types

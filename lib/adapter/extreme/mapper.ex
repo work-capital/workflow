@@ -1,9 +1,9 @@
-defmodule Workflow.Extreme.Mapper do
+defmodule Workflow.Adapter.Extreme.Mapper do
   @moduledoc """
   Map raw events to event data structs ready to be persisted to the event store.
   """
   # serialization alias
-  alias Workflow.Extreme.Serialization
+  alias Workflow.Adapter.Extreme.Serialization
 
   # extreme aliases
   alias Extreme.Messages.ReadStreamEvents

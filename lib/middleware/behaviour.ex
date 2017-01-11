@@ -1,4 +1,4 @@
-defmodule Workflow.Middleware do
+defmodule Workflow.Middleware.Behaviour do
   # use Behaviour
   # ihalias Exq.Middleware.Pipeline
   #

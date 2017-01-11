@@ -1,10 +1,10 @@
-defmodule Workflow.Extreme.Adapter do
+defmodule Workflow.Adapter.Extreme do
   require Logger
   @moduledoc """ 
   Interface with the Extreme EventStore driver to save and read to EVENTSTORE.
   Note that the Engine supervisor starts the driver naming it as 'EventStore'.
   """
-  alias Workflow.Extreme.Mapper
+  alias Workflow.Adapter.Extreme.Mapper
   alias Extreme.Messages.WriteEventsCompleted
 
   @behaviour Workflow.Adapter

@@ -5,7 +5,7 @@ defmodule Workflow do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
     children = [
-      supervisor(Workflow.Extreme.Supervisor, [], restart: :permanent),
+      supervisor(Workflow.Adapter.Extreme.Supervisor, [], restart: :permanent),
       supervisor(Workflow.Supervisor, [], restart: :permanent),
     ]
     opts = [strategy: :one_for_one, name: Workflow.Application]

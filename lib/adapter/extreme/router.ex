@@ -1,4 +1,4 @@
-defmodule Workflow.Extreme.Router do
+defmodule Workflow.Adapter.Extreme.Router do
   require Logger
   use GenServer
 
