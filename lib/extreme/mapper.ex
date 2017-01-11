@@ -18,7 +18,9 @@ defmodule Workflow.Extreme.Mapper do
   # rebuild the struct from a string stored in the eventstore
   def extract_data(message) do
     st = message.event.event_type |> make_alias |> struct
-    message.event.data |> deserialize(st)
+    data = message.event.data |> deserialize(st)
+    meta = message.event.metadata |> decode
+    {data, meta}
   end
 
   # transforms a ":Jim" string into a Jim atom alias
@@ -32,9 +34,11 @@ defmodule Workflow.Extreme.Mapper do
   defp deserialize(data, struct \\ nil),
     do: Serialization.decode(data, struct)
 
+  defp decode(map),
+    do: Poison.decode!(map)
+
   @doc "create a write message to write events, state, or anything else"
   def map_write(stream, data, metadata) do
-    IO.inspect metadata
     WriteEvents.new(
       event_stream_id: stream,
       expected_version: -2,
@@ -44,7 +48,7 @@ defmodule Workflow.Extreme.Mapper do
         data_content_type: 0,
         metadata_content_type: 0,
         data: Serialization.encode(data),
-        metadata: Serialization.encode("{ \"metadata\": {\"role\": \"jim\"}   }")
+        metadata: Poison.encode!(metadata)
       )],
       require_master: false
     )

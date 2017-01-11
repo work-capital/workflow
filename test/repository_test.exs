@@ -68,7 +68,7 @@ defmodule RepositoryTest do
   end
 
 
-  test "simulate using side effects" do
+  #test "simulate using side effects" do
     # stream_id = "repository-test-01-" <> UUID.uuid4
     # container = Repository.start_container(CounterAggregate, stream_id)
     # # process two commands
@@ -81,7 +81,7 @@ defmodule RepositoryTest do
     # IO.inspect res1
     #
     # assert data== %CounterAggregate{counter: 4}  #  7 - 3 = 4
-  end
+    #end
 
 
 end

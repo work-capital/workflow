@@ -38,7 +38,7 @@ defmodule Workflow.PersistenceTest do
 
 
 
-  test "Apply events for a data structure" do
+    #test "Apply events for a data structure" do
 
     # stream_id = "persistence-test-01-" <> UUID.uuid4
     # aggregate = %ExampleAggregate{}
@@ -57,5 +57,5 @@ defmodule Workflow.PersistenceTest do
     # last_state2   = %ExampleAggregate{items: [1, 2], last_index: 2}
     # assert state2 == last_state2
 
-  end
+    #end
 end

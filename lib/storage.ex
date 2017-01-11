@@ -23,7 +23,6 @@ defmodule Workflow.Storage do
   def append_to_stream(stream_id, expected_version, data, metadata), do:
     adapter.append_to_stream(stream_id, expected_version, data, metadata)
 
-
   @doc "Read pure events from stream"
   def read_stream_forward(stream_id, start_version, read_event_batch_size \\ @read_event_batch_size), do:
     adapter.read_stream_forward(stream_id, start_version, read_event_batch_size)
