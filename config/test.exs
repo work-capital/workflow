@@ -6,7 +6,7 @@ use Mix.Config
 
 
 config :workflow,
-  adapter: Workflow.Extreme.Adapter
+  adapter: Workflow.Adapter.Extreme
 
 #-------------------------------
 #  EXTREME [Eventstore Driver]
