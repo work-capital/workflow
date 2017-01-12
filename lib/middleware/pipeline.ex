@@ -15,6 +15,7 @@ defmodule Workflow.Middleware.Pipeline do
 
   defstruct [
     assigns: %{},
+    data: nil,
     message: nil,
     halted: false,
     response: nil,

@@ -4,8 +4,8 @@ defmodule Workflow.StorageTest do
   #import Commanded.Enumerable, only: [pluck: 2]
   #alias Commanded.Aggregates.{Registry,Aggregate}
   alias Workflow.Storage
-  alias Workflow.Metadata
 
+  # TODO: clean this example, and use the domain/counter example domain
   defmodule ExampleAggregate do
     defstruct [
       items: [],
@@ -56,15 +56,15 @@ defmodule Workflow.StorageTest do
     evt = Enum.at(evts,3)  # let's pick the 4th event
     metadata = %{"message_id" => "c19df3-2dfds", "correlation_id" => "di3284"}
     :ok = Storage.append_to_stream(stream_id, 0, evt, metadata)
-    :ok = Storage.append_to_stream(stream_id, 1, evt, metadata)
+    :ok = Storage.append_to_stream(stream_id, 1, evt)    # -------------> without metadata also :)
     res = Storage.append_to_stream(stream_id, 2, evt, metadata)
     assert res == :ok
-    {:ok, res2} = Storage.read_stream_forward(stream_id, 0)
-    IO.inspect res2
+    {:ok, res2} = Storage.read_stream_forward(stream_id, 0, 3)  # read batch size of 3 events
+    # IO.inspect res2
     assert res2 == [{%Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 4},
         %{"correlation_id" => "di3284", "message_id" => "c19df3-2dfds"}},
        {%Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 4},
-        %{"correlation_id" => "di3284", "message_id" => "c19df3-2dfds"}},
+        nil},                                            # -------------> without metadata result
        {%Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 4},
         %{"correlation_id" => "di3284", "message_id" => "c19df3-2dfds"}}]
 
@@ -73,12 +73,12 @@ defmodule Workflow.StorageTest do
     #   %Workflow.StorageTest.ExampleAggregate.Events.ItemAppended{index: 5}]}
     # assert res2 == expected_res
   end
-  
-  # test "read stream forward for a non-existing stream, and generate error" do
-    # stream_id = UUID.uuid4
-    # res = Storage.read_stream_forward(stream_id, 0, 2)
-    # {error, reason} = res
-    # assert error == :error
-  # end
+
+  test "read stream forward for a non-existing stream, and generate error" do
+    stream_id = UUID.uuid4
+    res = Storage.read_stream_forward(stream_id, 0, 2)
+    {error, reason} = res
+    assert error == :error
+  end
 
 end

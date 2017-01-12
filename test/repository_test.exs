@@ -1,12 +1,12 @@
 defmodule RepositoryTest do
   use ExUnit.Case
 
+  # tested modules
   alias Workflow.Container
-  alias Workflow.Domain.Account
   alias Workflow.Repository
 
+  # domain data structures
   alias Workflow.Domain.Counter
-
   alias Counter.Commands.{Add, Remove}
   alias Counter.Events.{Added, Removed}
 

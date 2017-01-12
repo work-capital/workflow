@@ -26,10 +26,12 @@ defmodule Workflow.Persistence do
   def rebuild_from_events(%Container{uuid: uuid, module: module, data: data} = state, start_version) do
     case Storage.read_stream_forward(uuid, start_version, @read_event_batch_size) do
       {:ok, batch} ->
+        IO.inspect "dfsdfsdfsdf"
+        IO.inspect batch
         batch_size = length(batch)
 
         # rebuild the aggregate's state from the batch of events
-        data = apply_events(module, data, batch)
+        #data = apply_events(module, data, batch)
 
         state = %Container{state |
           version: start_version - 1 + batch_size,
@@ -46,7 +48,8 @@ defmodule Workflow.Persistence do
             rebuild_from_events(state, start_version + @read_event_batch_size)
         end
 
-      {:error, _} ->
+      {:error, reason} ->
+        Logger.error "Error rebuilding events with reason: #{reason}"
         # data-structure does not exist so return empty state
         state
     end
