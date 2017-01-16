@@ -35,7 +35,6 @@ defmodule Workflow.Container do
 
 
   ## CALLBACKS
-  
   def init(%Container{} = state) do
     GenServer.cast(self, {:restore})
     {:ok, state}

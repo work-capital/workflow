@@ -21,17 +21,21 @@ defmodule Workflow.Persistence do
 
 
 
-  @doc "Rebuild if events are found, if not found, return the container state with an empty data structure"
+  @doc """
+  Rebuild if events are found, if not found, return the container state with an empty data structure
+  """
   def rebuild_from_events(%Container{} = state),  do: rebuild_from_events(state, 1)
   def rebuild_from_events(%Container{uuid: uuid, module: module, data: data} = state, start_version) do
     case Storage.read_stream_forward(uuid, start_version, @read_event_batch_size) do
       {:ok, batch} ->
-        IO.inspect "dfsdfsdfsdf"
-        IO.inspect batch
         batch_size = length(batch)
+        #IO.inspect(batch)
+        #IO.inspect(clean_metadata(batch))
+        #IO.inspect data
 
-        # rebuild the aggregate's state from the batch of events
-        #data = apply_events(module, data, batch)
+        # TODO: rebuild the aggregate's state from the batch of events
+        # data2 = apply_events(module, data, clean_metadata(batch))
+        # IO.inspect module.apply(data, Enum.at(batch,0))
 
         state = %Container{state |
           version: start_version - 1 + batch_size,
@@ -56,27 +60,43 @@ defmodule Workflow.Persistence do
     state
   end
 
-  @doc "Store events in eventstore"
+  @doc """
+  Store events in eventstore
+  """
   def persist_events([], _aggregate_uuid, _expected_version), do: :ok
   def persist_events(pending_events, uuid, expected_version) do
     :ok = Storage.append_to_stream(uuid, expected_version, pending_events)
   end
 
-  @doc "Rebuild state data from saved snapshot"
+  @doc """
+  Rebuild state data from saved snapshot
+  """
   def rebuild_from_snapshot(%Container{uuid: uuid, module: module, data: data} = state) do
     #:ok =Storage
 
   end
 
-  @doc "Persist state data"
+  @doc """
+  Persist state data
+  """
   def persist_snapshot(%Container{uuid: uuid, module: module, data: data} = state) do
     :ok = Storage.fetch_state(uuid, data)
 
   end
 
-  @doc "Receive a module that implements apply function, and rebuild the state from events"
+  @doc """
+  Receive a module that implements apply function, and rebuild the state from events
+  """
   def apply_events(module, state, events), do:
     Enum.reduce(events, state, &module.apply(&2, &1))
+
+
+  @doc """
+  Clean metadata
+  """
+  def clean_metadata(events),           do: clean_metadata(events, [])
+  def clean_metadata([], acc),          do: acc
+  def clean_metadata([ {h,_} |t], acc), do: clean_metadata(t, acc ++ [h])
 
 end
 

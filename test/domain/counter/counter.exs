@@ -5,13 +5,13 @@ defmodule Workflow.Domain.Counter do
 
   # commands & events
   defmodule Commands do
-    defmodule Add,    do: defstruct [quantity: nil]
-    defmodule Remove, do: defstruct [quantity: nil]
+    defmodule Add,    do: defstruct [amount: nil]
+    defmodule Remove, do: defstruct [amount: nil]
   end
 
   defmodule Events do
-    defmodule Added,   do: defstruct [counter: nil]
-    defmodule Removed, do: defstruct [counter: nil]
+    defmodule Added,   do: defstruct [amount: nil]
+    defmodule Removed, do: defstruct [amount: nil]
   end
 
   # aliases
@@ -20,20 +20,19 @@ defmodule Workflow.Domain.Counter do
   alias Workflow.Domain.Counter
 
   # handlers
-  def handle(%Counter{counter: counter}, %Add{quantity: quantity}) do
-    new_counter = counter + quantity
-    %Added{counter: new_counter}
+  def handle(%Counter{counter: counter}, %Add{amount: amount}) do
+    %Added{amount: amount}
   end
 
-  def handle(%Counter{counter: counter}, %Remove{quantity: quantity}) do
-    new_counter = counter - quantity
-    %Removed{counter: new_counter}
+  def handle(%Counter{counter: counter}, %Remove{amount: amount}) do
+    %Removed{amount: amount}
   end
 
   # state mutatators
-  def apply(%Counter{} = state, %Added{counter: counter}), do:
-    %Counter{state | counter: counter }
+  def apply(%Counter{counter: counter} = state, %Added{amount: amount}), do:
+    %Counter{state | counter: counter + amount}
 
-  def apply(%Counter{} = state, %Removed{counter: counter}), do:
-    %Counter{state | counter: counter }
+  def apply(%Counter{counter: counter} = state, %Removed{amount: amount}), do:
+    %Counter{state | counter: counter - amount}
+
 end
