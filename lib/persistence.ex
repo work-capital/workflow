@@ -34,7 +34,7 @@ defmodule Workflow.Persistence do
         #IO.inspect data
 
         # TODO: rebuild the aggregate's state from the batch of events
-        # data2 = apply_events(module, data, clean_metadata(batch))
+        data = apply_events(module, data, clean_metadata(batch))
         # IO.inspect module.apply(data, Enum.at(batch,0))
 
         state = %Container{state |
