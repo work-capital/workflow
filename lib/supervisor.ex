@@ -10,7 +10,7 @@ defmodule Workflow.Supervisor do
     Supervisor.start_link(__MODULE__, :ok, name: @module)
 
   def start_container(module, uuid) do
-    Logger.debug(fn -> "starting process for `#{module}` with uuid #{uuid}" end)
+    #Logger.debug(fn -> "starting process for `#{module}` with uuid #{uuid}" end)
     Supervisor.start_child(Workflow.Supervisor, [module, uuid])
   end
 

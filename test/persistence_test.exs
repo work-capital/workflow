@@ -36,34 +36,29 @@ defmodule Workflow.PersistenceTest do
         |> Counter.handle(%Remove{amount: 2})
 
       state = Persistence.apply_events(Workflow.Domain.Counter, %Counter{}, [ev1, ev2])
-
       assert state == %Workflow.Domain.Counter{counter: 5}
     end
 
 
     test "Apply events for a data structure [side-effects]" do
       stream_id = "persistence-test-01-" <> UUID.uuid4
-
-      # generate events and persist
+      # generate one event and persist
       ev1 = %Counter{}
         |> Counter.handle(%Add{amount: 9})
+      :ok = Persistence.persist_event(ev1, stream_id, 0)
 
-      :ok = Persistence.persist_events(ev1, stream_id, 0)
-
+      # generate another event and persist
       ev2 = %Counter{}
         |> Counter.handle(%Remove{amount: 3})
+      :ok = Persistence.persist_event(ev2, stream_id, 1)
 
-      :ok = Persistence.persist_events(ev2, stream_id, 1)
-
-
-      # 
+      # create an empty container data structure
       empty_container = %Container{uuid: stream_id,
                                    module: Workflow.Domain.Counter,
                                    version: 0,
                                    data: %Counter{}}
-
+      # rebuild an aggregate inside a container
       container = Persistence.rebuild_from_events(empty_container, 0)
-
       assert container = %Workflow.Container{data: %Workflow.Domain.Counter{counter: 6}}
     end
 

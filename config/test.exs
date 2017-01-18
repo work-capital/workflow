@@ -38,7 +38,7 @@ config :logger, :console,
     format: "\n$time $metadata[$level] $levelpad$message\n",
     colors: [info: :magenta],
     metadata: [:module, :function, :id, :uuid],
-    level: :info
+    level: :debug
 
 config :logger, :log_debug,
   path: "./logs/debug.log",

@@ -17,11 +17,8 @@ defmodule Workflow.Adapter.Extreme.Mapper do
 
   # rebuild the struct from a string stored in the eventstore
   def extract_data(message) do
-    event_type =
-      message.event.event_type
-        |> make_alias
-        |> struct
-    data = message.event.data     |> deserialize(event_type)
+    st = message.event.event_type |> make_alias |> struct
+    data = message.event.data |> deserialize(st)
     meta = message.event.metadata |> decode
     {data, meta}
   end
@@ -40,24 +37,20 @@ defmodule Workflow.Adapter.Extreme.Mapper do
   defp decode(map),
     do: Poison.decode!(map)
 
-  @doc "create a write message for a list of events, that are {%Event{}, %{id: 3, cor: 4}} format"
-  def map_write_events(stream, events) do
-    proto_events = Enum.map(events, &create_event/1) # map the list of structs to event messages
+  @doc "create a write message to write events, state, or anything else"
+  def map_write(stream, data, metadata) do
     WriteEvents.new(
       event_stream_id: stream,
       expected_version: -2,
-      events: proto_events,
+      events: [NewEvent.new(
+        event_id: Extreme.Tools.gen_uuid(),
+        event_type: to_string(data.__struct__),
+        data_content_type: 0,
+        metadata_content_type: 0,
+        data: Serialization.encode(data),
+        metadata: Poison.encode!(metadata)
+      )],
       require_master: false
-    )
-  end
-  defp create_event({data, meta}) do
-    NewEvent.new(
-      event_id: Extreme.Tools.gen_uuid(),
-      event_type: to_string(data.__struct__),
-      data_content_type: 0,
-      metadata_content_type: 0,
-      data: Serialization.encode(data),
-      metadata: Poison.encode!(meta)
     )
   end
 

@@ -4,7 +4,8 @@ defmodule Workflow.Container do
   """
   use GenServer
   require Logger
-  
+
+  # aliases
   alias Workflow.Container
   alias Workflow.Persistence
 
@@ -12,15 +13,15 @@ defmodule Workflow.Container do
     module:       nil,
     uuid:         nil,
     data:         nil,
-    version:      nil
+    version:      0
   ]
 
   ## API
-
   def start_link(module, uuid) do
     GenServer.start_link(__MODULE__, %Container{
       module: module,
-      uuid:   uuid
+      uuid:   uuid,
+      data: struct(module)
     })
   end
 
@@ -46,17 +47,18 @@ defmodule Workflow.Container do
   def handle_call({:state}, _from, %Container{} = state), do:
     {:reply, state, state}
 
-  @doc "Replay the events from the eventstore db"
-  def handle_cast({:restore}, %Container{module: module} = state) do
+  @doc "Replay the events from the eventstore db, from the actual data_state"
+  def handle_cast({:restore}, %Container{module: module, data: data, version: version} = state) do
     state = Persistence.rebuild_from_events(%Container{state |
-      version: 0,
-      data: struct(module) # empty data structure to be filled
+      version: version,
+      data: data
     })
     {:noreply, state}
   end
 
   @doc "Handle a command (for an aggregate) or an event (for the process manager)"
   def handle_call({:process_message, message}, _from, %Container{} = state) do
+    #IO.inspect state
     {reply, state} = process(message, state)
     {:reply, reply, state}
   end
@@ -65,21 +67,18 @@ defmodule Workflow.Container do
 
   defp process(message, 
     %Container{uuid: uuid, version: expected_version, data: data, module: module} = state) do
-      event = module.handle(data, message)   # process message for an aggregate or process manager
-      wrapped_event = List.wrap(event)
+    #IO.inspect "module #{module} data #{data} event #{}"
 
-      new_data = Persistence.apply_events(module, data, wrapped_event)
-      Persistence.persist_events(wrapped_event, uuid, expected_version)
+    event = module.handle(data, message)   # process message for an aggregate or process manager
+    new_data = module.apply(data, event) # mutate state
+
+      Persistence.persist_event(event, uuid, expected_version)
       state = %Container{ state |
         data: new_data,
-        version: expected_version + length(wrapped_event)
+        version: expected_version + 1 # working wiht 1 event only, without buffering
       }
       {:ok, state}
   end
-
-  # update the process instance's state by applying the event
-  def mutate_state(module, data, event), do:
-    module.apply(data, event)
 
 
 end

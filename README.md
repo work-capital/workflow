@@ -63,6 +63,93 @@ TODO: add example
 ```
 
 
+### Message Flow
+You can use pipelines to determine different flows for aggregates, process
+managers and sagas.
+
+
+#### Aggregate Flow
+
+```elixir
+defmodule Workflow.Domain.Counter do
+  defstruct [
+    counter: 0
+  ]
+
+  # commands & events
+  defmodule Commands do
+    defmodule Add,    do: defstruct [amount: nil]
+    defmodule Remove, do: defstruct [amount: nil]
+  end
+
+  defmodule Events do
+    defmodule Added,   do: defstruct [amount: nil]
+    defmodule Removed, do: defstruct [amount: nil]
+  end
+
+  # aliases
+  alias Commands.{Add, Remove}
+  alias Events.{Added, Removed}
+  alias Workflow.Domain.Counter
+
+  # handlers
+  def handle(%Counter{counter: counter}, %Add{amount: amount}), do:
+    %Added{amount: amount}
+
+  def handle(%Counter{counter: counter}, %Remove{amount: amount}), do:
+    %Removed{amount: amount}
+
+  # state mutatators
+  def apply(%Counter{counter: counter} = state, %Added{amount: amount}), do:
+    %Counter{state | counter: counter + amount}
+
+  def apply(%Counter{counter: counter} = state, %Removed{amount: amount}), do:
+    %Counter{state | counter: counter - amount}
+
+end
+```
+*FLOW FROM EXTERNAL SOURCE* 
+
+1. Command arrives the system from external source and is dispatched:
+   (The causation-id is in this case is the request-id)
+     Router.dispatch(%Add{amount: amount},
+                     causation_id}
+
+2. Arrives and assure message has uuid, if not, it creates one.
+
+3. Command goes to pipeline, and the pipeline adds the sent id to the
+   causation id, and creates a new uuid for this command.
+
+      %Add{amount: amount, initiator: true}      -> initiator command!
+      %{message_id: "uuid-1", causation_id: "rest-id"}
+
+5. Pipeline take only the Command message to the aggregate and make the
+   aggregate to handle it.
+
+6. After handling, and without failing, pipeline catches the zero, one or more events resulted from that command,
+and add for every event the metadata below. Note that because the command above
+is an "initiator", pipeline will automatically copy the event message_id to the
+correlation_id field. And from now, this event, when emited by the eventstore,
+ROUTER will get it and send to dispatcher, so a process manager with the
+correlation_id below will start.
+
+      %Added{amount: amount}
+      %{message_id: "uuid-2", causation_id: "uuid-1", correlation_id: "uuid-2"}
+
+7. Pipeline apply this event, and mutate state
+
+8. Pipeline send this event with the meta-data to persistence.
+
+
+*FLOW FROM PROCESS MANAGER*
+
+1. Event arrives at ROUTER, and are filtered, only events that have correlation_id - they cause the dispatcher to make 
+the repository "replay" the process manager until it's correct state (or retreive from a snapshot (in future versions))
+
+2. Filtered event will arrive and 
+
+
+
 ### Eventstore
 Run a [docker](https://github.com/EventStore/eventstore-docker) instance in your machine. If you have mac, ask the sys-admin to start it in a linux server on you LAN or WAN. Access the web gui in http://localhost:2113 . User: admin, pass: changeit
 

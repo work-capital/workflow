@@ -20,8 +20,8 @@ defmodule Workflow.Storage do
 
 
   @doc "Recieve internal event data to append. message building is an adapter task."
-  def append_to_stream(stream_id, expected_version, data, metadata \\ nil), do:
-    adapter.append_to_stream(stream_id, expected_version, data, metadata)
+  def append_to_stream(stream_id, expected_version, message), do:
+    adapter.append_to_stream(stream_id, expected_version, message)
 
   @doc "Read pure events from stream"
   def read_stream_forward(stream_id, start_version, read_event_batch_size \\ @read_event_batch_size), do:

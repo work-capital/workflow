@@ -20,13 +20,11 @@ defmodule Workflow.Domain.Counter do
   alias Workflow.Domain.Counter
 
   # handlers
-  def handle(%Counter{counter: counter}, %Add{amount: amount}) do
+  def handle(%Counter{counter: counter}, %Add{amount: amount}), do:
     %Added{amount: amount}
-  end
 
-  def handle(%Counter{counter: counter}, %Remove{amount: amount}) do
+  def handle(%Counter{counter: counter}, %Remove{amount: amount}), do:
     %Removed{amount: amount}
-  end
 
   # state mutatators
   def apply(%Counter{counter: counter} = state, %Added{amount: amount}), do:

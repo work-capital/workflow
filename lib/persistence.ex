@@ -29,9 +29,6 @@ defmodule Workflow.Persistence do
     case Storage.read_stream_forward(uuid, start_version, @read_event_batch_size) do
       {:ok, batch} ->
         batch_size = length(batch)
-        #IO.inspect(batch)
-        #IO.inspect(clean_metadata(batch))
-        #IO.inspect data
 
         # TODO: rebuild the aggregate's state from the batch of events
         data = apply_events(module, data, clean_metadata(batch))
@@ -51,10 +48,8 @@ defmodule Workflow.Persistence do
             # fetch next batch of events to apply to updated aggregate state
             rebuild_from_events(state, start_version + @read_event_batch_size)
         end
-
+      # every NEW data structure emits NoStream error (it try to find it)
       {:error, reason} ->
-        Logger.error "Error rebuilding events with reason: #{reason}"
-        # data-structure does not exist so return empty state
         state
     end
     state
@@ -63,8 +58,8 @@ defmodule Workflow.Persistence do
   @doc """
   Store events in eventstore
   """
-  def persist_events([], _aggregate_uuid, _expected_version), do: :ok
-  def persist_events(pending_events, uuid, expected_version) do
+  def persist_event([], _aggregate_uuid, _expected_version), do: :ok
+  def persist_event(pending_events, uuid, expected_version) do
     :ok = Storage.append_to_stream(uuid, expected_version, pending_events)
   end
 
