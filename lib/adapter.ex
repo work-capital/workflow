@@ -13,7 +13,7 @@ defmodule Workflow.Adapter do
   @type stream                 :: String.t     # The Stream ID
   @type reason                 :: atom
   @type expected_version       :: number
-  @type message                :: struct()
+  @type events                 :: [{struct(), map()}]
   @type state                  :: struct()
   @type version                :: number
 
@@ -21,7 +21,7 @@ defmodule Workflow.Adapter do
 
 
   @doc "Load a list of events from an specific position"
-  @callback append_to_stream(stream_id, expected_version, message) ::
+  @callback append_to_stream(stream_id, expected_version, events) ::
     :ok | {:error, reason}
 
   @doc "Load a batch of events from storage"

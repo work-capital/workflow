@@ -40,7 +40,9 @@ defmodule Workflow.Adapter.Extreme.Mapper do
   defp decode(map),
     do: Poison.decode!(map)
 
-  @doc "create a write message for a list of events, that are {%Event{}, %{id: 3, cor: 4}} format"
+  @doc """
+  Create a write message for a list of events, that are [{%Event{}, %{id: 3, cor: 4}] format
+  """
   def map_write_events(stream, events) do
     proto_events = Enum.map(events, &create_event/1) # map the list of structs to event messages
     WriteEvents.new(
@@ -61,7 +63,9 @@ defmodule Workflow.Adapter.Extreme.Mapper do
     )
   end
 
-  @doc "create a read stream message"
+  @doc """
+  Create a read stream message
+  """
   def map_read_forwards(stream_id, from_event_number, max_count) do
     %ReadStreamEvents{
       event_stream_id: stream_id,
@@ -72,7 +76,9 @@ defmodule Workflow.Adapter.Extreme.Mapper do
     }
   end
 
-  @doc "to read snapshots, we get the last saved state"
+  @doc """
+  To read snapshots, we get the last saved state
+  """
   def map_read_backwards(stream_id) do
     Extreme.Messages.ReadStreamEventsBackward.new(
       event_stream_id: stream_id,

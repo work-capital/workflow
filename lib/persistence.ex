@@ -58,9 +58,12 @@ defmodule Workflow.Persistence do
   @doc """
   Store events in eventstore
   """
-  def persist_event([], _aggregate_uuid, _expected_version), do: :ok
-  def persist_event(pending_events, uuid, expected_version) do
-    :ok = Storage.append_to_stream(uuid, expected_version, pending_events)
+  def persist_events([], _aggregate_uuid, _expected_version), do: :ok
+  def persist_events(pending_events, uuid, expected_version) do
+    case Storage.append_to_stream(uuid, expected_version, pending_events) do
+      :ok -> :ok
+      {:error, error} -> {:error, error}
+    end
   end
 
   @doc """

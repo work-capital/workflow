@@ -17,17 +17,24 @@ defmodule Workflow.Adapter.Extreme do
   @type reason                :: atom()
   @type read_event_batch_size :: integer()
 
-  @doc "Save a list of events to the stream."
-  def append_to_stream(stream_id, expected_version, data, metadata \\ nil) do
+  @doc """
+  Save a list of events to the stream.
+  """
+  def append_to_stream(stream_id, expected_version, events) do
     # attention, erlangish pattern matching (^)
-    message = Mapper.map_write(stream_id, data, metadata)
-    version = expected_version 
-    {:ok, %WriteEventsCompleted{first_event_number: ^version}} = Extreme.execute(@extreme, message)
-     :ok
+    wrapped_events = List.wrap(events)
+    message = Mapper.map_write_events(stream_id, wrapped_events)
+    version = expected_version
+    case Extreme.execute(@extreme, message) do
+      {:ok, %WriteEventsCompleted{first_event_number: ^version}} -> :ok
+      {:ok, _} -> {:error, UnsyncVersion}   # TODO: better treat errors here
+    end
   end
 
 
-  @doc "Read stream, transforming messages in an event list ready for replay"
+  @doc """
+  Read stream, transforming messages in an event list ready for replay
+  """
   def read_stream_forward(stream_id, start_version, read_event_batch_size) do
     message = Mapper.map_read_forwards(stream_id, start_version, read_event_batch_size)
     case Extreme.execute(@extreme, message) do
@@ -37,7 +44,9 @@ defmodule Workflow.Adapter.Extreme do
     end
   end
 
-  @doc "Read stream, transforming messages in an event list ready for replay"
+  @doc """
+  Read stream, transforming messages in an event list ready for replay TODO: read snapshot feature
+  """
   def read_stream_backward(stream_id, data) do
     # TODO: read 
     # message = Mapper.map_read_stream(stream_id, start_version, read_event_batch_size)

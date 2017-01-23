@@ -72,6 +72,11 @@ managers and sagas.
 
 ```elixir
 defmodule Workflow.Domain.Counter do
+  
+  def get_description(), do:
+    %{ type: Aggregate,
+       ttl: 24 }           # time to live: 24 hours
+
   defstruct [
     counter: 0
   ]
